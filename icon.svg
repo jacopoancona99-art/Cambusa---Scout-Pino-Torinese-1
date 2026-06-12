@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- sfondo cerchio -->
+  <circle cx="256" cy="256" r="256" fill="#f0ebe3"/>
+
+  <!-- tenda: triangolo principale -->
+  <polygon points="256,95 90,370 422,370" fill="#1B4D2E"/>
+  <!-- facciata tenda (ombra destra) -->
+  <polygon points="256,95 422,370 339,370" fill="#163d25"/>
+  <!-- apertura tenda (triangolo nero centrale) -->
+  <polygon points="256,220 210,370 302,370" fill="#2e2a25"/>
+  <!-- linea del picchetto -->
+  <line x1="256" y1="95" x2="256" y2="65" stroke="#c8773a" stroke-width="10" stroke-linecap="round"/>
+  <!-- picchetto top -->
+  <circle cx="256" cy="62" r="8" fill="#c8773a"/>
+
+  <!-- fiamme a destra della tenda -->
+  <!-- fiamma grande -->
+  <path d="M355,370 Q365,330 348,310 Q360,320 362,298 Q372,320 368,345 Q378,325 374,305 Q390,330 382,370 Z" fill="#e85d04"/>
+  <path d="M355,370 Q362,345 352,328 Q360,335 361,318 Q368,335 366,355 Q373,340 370,322 Q381,342 376,370 Z" fill="#f8961e"/>
+  <path d="M358,370 Q363,352 357,340 Q363,346 364,335 Q369,348 367,362 Q372,350 370,338 Q378,353 374,370 Z" fill="#fee440"/>
+
+  <!-- fiammella piccola sinistra tenda -->
+  <path d="M175,370 Q180,350 172,338 Q178,344 179,333 Q184,346 182,360 Q187,348 185,336 Q193,350 189,370 Z" fill="#e85d04"/>
+  <path d="M176,370 Q180,355 175,345 Q179,350 180,341 Q184,353 183,364 Q187,353 185,343 Q191,356 188,370 Z" fill="#f8961e"/>
+
+  <!-- base / terreno -->
+  <rect x="80" y="368" width="352" height="14" rx="7" fill="#2e2a25" opacity="0.25"/>
+</svg>
