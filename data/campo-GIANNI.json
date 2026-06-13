@@ -70,7 +70,13 @@
         "pranzo": [
           {
             "nome": "",
-            "ingredienti": []
+            "ingredienti": [
+              {
+                "nome": "",
+                "dose": "",
+                "um": "g"
+              }
+            ]
           }
         ],
         "merenda": [],
