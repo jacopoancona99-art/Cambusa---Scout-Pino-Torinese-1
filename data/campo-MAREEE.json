@@ -52,6 +52,11 @@
             "nome": "",
             "ingredienti": [
               {
+                "nome": "Salame",
+                "dose": "",
+                "um": "g"
+              },
+              {
                 "nome": "",
                 "dose": "",
                 "um": "g"
@@ -86,7 +91,14 @@
         "conforto": []
       }
     },
-    "budgetReale": {},
+    "budgetReale": {
+      "s": "",
+      "sa": "",
+      "sal": "",
+      "sala": "",
+      "salam": "",
+      "salame": ""
+    },
     "activeMarkets": [
       "esselunga",
       "coop",
