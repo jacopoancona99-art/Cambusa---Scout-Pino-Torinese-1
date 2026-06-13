@@ -1,0 +1,135 @@
+{
+  "branco": {
+    "conf": {
+      "giorni": 4,
+      "ragazzi": 24,
+      "capi": 6,
+      "cambusieri": 2,
+      "staff": 0,
+      "nome": "",
+      "budget": 0,
+      "pastiAttivi": {
+        "colazione": true,
+        "pranzo": true,
+        "merenda": true,
+        "cena": true,
+        "conforto": true
+      },
+      "intolleranze": []
+    },
+    "menu": {},
+    "budgetReale": {},
+    "activeMarkets": [
+      "esselunga",
+      "coop",
+      "lidl",
+      "eurospin"
+    ],
+    "scontrini": []
+  },
+  "reparto": {
+    "conf": {
+      "giorni": 4,
+      "ragazzi": 24,
+      "capi": 6,
+      "cambusieri": 2,
+      "staff": 0,
+      "nome": "",
+      "budget": 0,
+      "pastiAttivi": {
+        "colazione": true,
+        "merenda-mattina": true,
+        "pranzo": true,
+        "merenda": true,
+        "cena": true,
+        "conforto": true
+      },
+      "intolleranze": [],
+      "intolleranzeCount": {}
+    },
+    "menu": {
+      "1": {
+        "colazione": [],
+        "merenda-mattina": [
+          {
+            "nome": "Gelato",
+            "ingredienti": [
+              {
+                "nome": "Latte",
+                "dose": "3",
+                "um": "L"
+              },
+              {
+                "nome": "Zucchero",
+                "dose": "6",
+                "um": "cucch"
+              }
+            ]
+          }
+        ],
+        "pranzo": [
+          {
+            "nome": "",
+            "ingredienti": []
+          }
+        ],
+        "merenda": [],
+        "cena": [],
+        "conforto": []
+      },
+      "2": {
+        "colazione": [],
+        "merenda-mattina": [],
+        "pranzo": [],
+        "merenda": [],
+        "cena": [],
+        "conforto": []
+      },
+      "3": {
+        "colazione": [],
+        "merenda-mattina": [],
+        "pranzo": [],
+        "merenda": [],
+        "cena": [],
+        "conforto": []
+      },
+      "4": {
+        "colazione": [],
+        "merenda-mattina": [],
+        "pranzo": [],
+        "merenda": [],
+        "cena": [],
+        "conforto": []
+      }
+    },
+    "budgetReale": {
+      "g": "",
+      "ge": "",
+      "gel": "",
+      "gela": "",
+      "gelat": "",
+      "gelat9": "",
+      "gelato": "",
+      "l": "",
+      "la": "",
+      "lat": "",
+      "latt": "",
+      "latte": "",
+      "z": "",
+      "zu": "",
+      "zuc": "",
+      "zucc": "",
+      "zucch": "",
+      "zucche": "",
+      "zuccher": "",
+      "zucchero": ""
+    },
+    "activeMarkets": [
+      "esselunga",
+      "coop",
+      "lidl",
+      "eurospin"
+    ],
+    "scontrini": []
+  }
+}
