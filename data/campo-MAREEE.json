@@ -38,32 +38,19 @@
       "budget": 0,
       "pastiAttivi": {
         "colazione": true,
+        "merenda-mattina": true,
         "pranzo": true,
         "merenda": true,
         "cena": true,
         "conforto": true
       },
-      "intolleranze": []
+      "intolleranze": [],
+      "intolleranzeCount": {}
     },
     "menu": {
       "1": {
-        "colazione": [
-          {
-            "nome": "",
-            "ingredienti": [
-              {
-                "nome": "Salame",
-                "dose": "",
-                "um": "g"
-              },
-              {
-                "nome": "",
-                "dose": "",
-                "um": "g"
-              }
-            ]
-          }
-        ],
+        "colazione": [],
+        "merenda-mattina": [],
         "pranzo": [],
         "merenda": [],
         "cena": [],
@@ -71,6 +58,7 @@
       },
       "2": {
         "colazione": [],
+        "merenda-mattina": [],
         "pranzo": [],
         "merenda": [],
         "cena": [],
@@ -78,6 +66,7 @@
       },
       "3": {
         "colazione": [],
+        "merenda-mattina": [],
         "pranzo": [],
         "merenda": [],
         "cena": [],
@@ -85,20 +74,14 @@
       },
       "4": {
         "colazione": [],
+        "merenda-mattina": [],
         "pranzo": [],
         "merenda": [],
         "cena": [],
         "conforto": []
       }
     },
-    "budgetReale": {
-      "s": "",
-      "sa": "",
-      "sal": "",
-      "sala": "",
-      "salam": "",
-      "salame": ""
-    },
+    "budgetReale": {},
     "activeMarkets": [
       "esselunga",
       "coop",
