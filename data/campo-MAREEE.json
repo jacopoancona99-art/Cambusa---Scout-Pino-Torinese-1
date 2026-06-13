@@ -1,0 +1,98 @@
+{
+  "branco": {
+    "conf": {
+      "giorni": 4,
+      "ragazzi": 24,
+      "capi": 6,
+      "cambusieri": 2,
+      "staff": 0,
+      "nome": "",
+      "budget": 0,
+      "pastiAttivi": {
+        "colazione": true,
+        "pranzo": true,
+        "merenda": true,
+        "cena": true,
+        "conforto": true
+      },
+      "intolleranze": []
+    },
+    "menu": {},
+    "budgetReale": {},
+    "activeMarkets": [
+      "esselunga",
+      "coop",
+      "lidl",
+      "eurospin"
+    ],
+    "scontrini": []
+  },
+  "reparto": {
+    "conf": {
+      "giorni": 4,
+      "ragazzi": 24,
+      "capi": 6,
+      "cambusieri": 2,
+      "staff": 0,
+      "nome": "",
+      "budget": 0,
+      "pastiAttivi": {
+        "colazione": true,
+        "pranzo": true,
+        "merenda": true,
+        "cena": true,
+        "conforto": true
+      },
+      "intolleranze": []
+    },
+    "menu": {
+      "1": {
+        "colazione": [
+          {
+            "nome": "",
+            "ingredienti": [
+              {
+                "nome": "",
+                "dose": "",
+                "um": "g"
+              }
+            ]
+          }
+        ],
+        "pranzo": [],
+        "merenda": [],
+        "cena": [],
+        "conforto": []
+      },
+      "2": {
+        "colazione": [],
+        "pranzo": [],
+        "merenda": [],
+        "cena": [],
+        "conforto": []
+      },
+      "3": {
+        "colazione": [],
+        "pranzo": [],
+        "merenda": [],
+        "cena": [],
+        "conforto": []
+      },
+      "4": {
+        "colazione": [],
+        "pranzo": [],
+        "merenda": [],
+        "cena": [],
+        "conforto": []
+      }
+    },
+    "budgetReale": {},
+    "activeMarkets": [
+      "esselunga",
+      "coop",
+      "lidl",
+      "eurospin"
+    ],
+    "scontrini": []
+  }
+}
