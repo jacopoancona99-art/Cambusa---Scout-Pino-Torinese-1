@@ -56,7 +56,18 @@
             "ingredienti": []
           }
         ],
-        "pranzo": [],
+        "pranzo": [
+          {
+            "nome": "",
+            "ingredienti": [
+              {
+                "nome": "",
+                "dose": "",
+                "um": "g"
+              }
+            ]
+          }
+        ],
         "merenda": [],
         "cena": [],
         "conforto": []
