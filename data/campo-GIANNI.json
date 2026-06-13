@@ -52,33 +52,11 @@
         "colazione": [],
         "merenda-mattina": [
           {
-            "nome": "Gelato",
-            "ingredienti": [
-              {
-                "nome": "Latte",
-                "dose": "3",
-                "um": "L"
-              },
-              {
-                "nome": "Zucchero",
-                "dose": "6",
-                "um": "cucch"
-              }
-            ]
-          }
-        ],
-        "pranzo": [
-          {
             "nome": "",
-            "ingredienti": [
-              {
-                "nome": "",
-                "dose": "",
-                "um": "g"
-              }
-            ]
+            "ingredienti": []
           }
         ],
+        "pranzo": [],
         "merenda": [],
         "cena": [],
         "conforto": []
@@ -89,7 +67,12 @@
         "pranzo": [],
         "merenda": [],
         "cena": [],
-        "conforto": []
+        "conforto": [
+          {
+            "nome": "",
+            "ingredienti": []
+          }
+        ]
       },
       "3": {
         "colazione": [],
@@ -108,28 +91,7 @@
         "conforto": []
       }
     },
-    "budgetReale": {
-      "g": "",
-      "ge": "",
-      "gel": "",
-      "gela": "",
-      "gelat": "",
-      "gelat9": "",
-      "gelato": "",
-      "l": "",
-      "la": "",
-      "lat": "",
-      "latt": "",
-      "latte": "",
-      "z": "",
-      "zu": "",
-      "zuc": "",
-      "zucc": "",
-      "zucch": "",
-      "zucche": "",
-      "zuccher": "",
-      "zucchero": ""
-    },
+    "budgetReale": {},
     "activeMarkets": [
       "esselunga",
       "coop",
