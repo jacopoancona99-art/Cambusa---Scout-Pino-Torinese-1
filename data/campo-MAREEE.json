@@ -50,7 +50,12 @@
     "menu": {
       "1": {
         "colazione": [],
-        "merenda-mattina": [],
+        "merenda-mattina": [
+          {
+            "nome": "",
+            "ingredienti": []
+          }
+        ],
         "pranzo": [],
         "merenda": [],
         "cena": [],
