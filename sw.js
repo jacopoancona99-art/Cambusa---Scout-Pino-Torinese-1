@@ -1,4 +1,4 @@
-const CACHE = 'cambusa-scout-v4';
+const CACHE = 'cambusa-scout-v4.1';
 const ASSETS = [
   './',
   './index.html',
