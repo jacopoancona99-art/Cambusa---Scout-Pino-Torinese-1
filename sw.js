@@ -1,4 +1,4 @@
-const CACHE = 'cambusa-scout-v.Index_14_debugg';
+const CACHE = 'cambusa-scout-v.Index_14.1_debugg';
 const STATIC = [
   './manifest.json',
   './icon.svg'
