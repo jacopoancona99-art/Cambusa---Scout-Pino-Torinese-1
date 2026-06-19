@@ -2041,6 +2041,7 @@ function getPasti(g) {
 // ═══════════════════════════════════════════════════
 function buildMenu() {
   if (!SECTION) return;
+  console.log('[buildMenu] chiamata, giorni=', C().giorni, 'children=', document.getElementById('giorni-container')?.children.length);
   const c = document.getElementById('giorni-container');
   const menu = S().menu;
   const ALL_PASTI = ['colazione','merenda-mattina','pranzo','merenda','cena','conforto'];
@@ -2083,6 +2084,8 @@ function buildMenu() {
         const mult = pastoKey === 'conforto' ? totConf() : totPerGiorno(g, pastoKey);
         badge.textContent = '×' + mult + ' pers.';
       });
+      // Aggiorna i piatti senza ricreare i listener del giorno
+      ps.forEach(({key}) => renderPiatti(g, key));
       continue;
     }
 
@@ -2186,6 +2189,8 @@ function buildMenu() {
       // Listener + Piatto
       block.querySelector('.btn-add-piatto').addEventListener('click', function() {
         const g2 = +this.dataset.g, p2 = this.dataset.p;
+        console.log('[+Piatto] click g='+g2+' p='+p2, 'connected:', this.isConnected, 'menu exists:', !!S().menu[g2]);
+        if (!S().menu[g2]) S().menu[g2] = {};
         if (!S().menu[g2][p2]) S().menu[g2][p2] = [];
         S().menu[g2][p2].push({nome:'', ingredienti:[]});
         renderPiatti(g2, p2); updateSpesa(); updateBudget(); updatePreviews(); saveData();
