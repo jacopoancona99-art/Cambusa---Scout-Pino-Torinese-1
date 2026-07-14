@@ -172,10 +172,21 @@ function render() {
   updateSpesa();
   updateBudget();
   updatePreviews();
+  renderScontrini();   // scontrini sono campo-level: aggiornali sempre
   loadNote();
   document.querySelectorAll('#market-chips .mchip').forEach(chip => {
     chip.classList.toggle('active', S().activeMarkets.includes(chip.dataset.market));
   });
+}
+
+// Da chiamare dopo ogni modifica al menu (piatti/ingredienti):
+// aggiorna le viste dipendenti e salva. Non ricostruisce il menu
+// (i render parziali preservano il focus mentre si digita).
+function menuChanged() {
+  updateSpesa();
+  updateBudget();
+  updatePreviews();
+  saveData();
 }
 
 // Inizializza Firebase (SDK compat via CDN, caricato in testa)
@@ -630,7 +641,7 @@ function buildMenu() {
         ovInput.value = overrideVal;
         ovInput.classList.toggle('override-active', !!overrideVal);
       }
-      // Aggiorna badge ×N per ogni pasto
+      // Aggiorna badge ×N e placeholder di ogni pasto (valore ereditato)
       existingCard.querySelectorAll('.pasto-badge').forEach(badge => {
         const pBlock = badge.closest('.pasto-block');
         if (!pBlock) return;
@@ -639,6 +650,13 @@ function buildMenu() {
         if (!pastoKey) return;
         const mult = pastoKey === 'conforto' ? totConf() : totPerGiorno(g, pastoKey);
         badge.textContent = '×' + mult + ' pers.';
+        // La casella verde (senza override) mostra come placeholder il valore ereditato
+        if (ovrInput && document.activeElement !== ovrInput) {
+          const ovPastoVal = (C().overridePersone||{})[g + '_' + pastoKey] || '';
+          ovrInput.placeholder = mult;
+          ovrInput.value = ovPastoVal;
+          ovrInput.classList.toggle('override-active', !!ovPastoVal);
+        }
       });
       // Aggiorna i piatti senza ricreare i listener del giorno
       ps.forEach(({key}) => renderPiatti(g, key));
@@ -667,7 +685,7 @@ function buildMenu() {
       if (!C().overridePersone) C().overridePersone = {};
       C().overridePersone[+this.dataset.g] = this.value;
       this.classList.toggle('override-active', this.value !== '');
-      // Aggiorna i badge ×N di tutti i pasti di questo giorno
+      // Aggiorna badge ×N e placeholder di tutti i pasti di questo giorno
       const gNum = +this.dataset.g;
       card.querySelectorAll('.pasto-badge').forEach(badge => {
         const pBlock = badge.closest('.pasto-block');
@@ -677,6 +695,8 @@ function buildMenu() {
         if (!pastoKey) return;
         const mult = pastoKey === 'conforto' ? totConf() : totPerGiorno(gNum, pastoKey);
         badge.textContent = '×' + mult + ' pers.';
+        // La casella verde del pasto mostra il valore ereditato come placeholder
+        if (ovrInput && !ovrInput.value) ovrInput.placeholder = mult;
       });
       saveData();
     });
@@ -748,7 +768,7 @@ function buildMenu() {
         if (!S().menu[g2]) S().menu[g2] = {};
         if (!S().menu[g2][p2]) S().menu[g2][p2] = [];
         S().menu[g2][p2].push({nome:'', ingredienti:[]});
-        renderPiatti(g2, p2); updateSpesa(); updateBudget(); updatePreviews(); saveData();
+        renderPiatti(g2, p2); menuChanged();
       });
       renderPiatti(g, key);
     });
@@ -792,14 +812,14 @@ function renderPiatti(g, pasto) {
         const g=+this.dataset.g, p=this.dataset.p, i=+this.dataset.i;
         ensureMenuSlot(g,p,i);
         S().menu[g][p][i].nome = this.value;
-        updateSpesa(); updateBudget(); updatePreviews(); saveData();
+        menuChanged();
       });
 
       // listener elimina piatto
       card.querySelector('.btn-del-piatto').addEventListener('click', function() {
         const g=+this.dataset.g, p=this.dataset.p, i=+this.dataset.i;
         S().menu[g][p].splice(i,1);
-        renderPiatti(g,p); updateSpesa(); updateBudget(); updatePreviews(); saveData();
+        renderPiatti(g,p); menuChanged();
       });
 
       // listener aggiungi ingrediente
@@ -809,7 +829,7 @@ function renderPiatti(g, pasto) {
         if (!S().menu[g][p][i].ingredienti) S().menu[g][p][i].ingredienti = [];
         S().menu[g][p][i].ingredienti.push({nome:'', dose:'', um:'g'});
         renderIngredienti(card, g, p, i);
-        updateSpesa(); updateBudget(); updatePreviews(); saveData();
+        menuChanged();
       });
     }
 
@@ -903,23 +923,23 @@ function renderIngredienti(card, g, pasto, idx) {
         // reset confirmed se cambia il nome
         delete S().menu[g][p][pi].ingredienti[ii].confirmed;
         refreshIngrAlert(wrapper, g, p, pi, ii);
-        updateSpesa(); updateBudget(); updatePreviews(); saveData();
+        menuChanged();
       });
       row.querySelector('.ingr-dose').addEventListener('input', function() {
         const g=+this.dataset.g,p=this.dataset.p,pi=+this.dataset.pi,ii=+this.dataset.ii;
         S().menu[g][p][pi].ingredienti[ii].dose = this.value;
-        updateSpesa(); updateBudget(); updatePreviews(); saveData();
+        menuChanged();
       });
       row.querySelector('.ingr-um').addEventListener('change', function() {
         const g=+this.dataset.g,p=this.dataset.p,pi=+this.dataset.pi,ii=+this.dataset.ii;
         S().menu[g][p][pi].ingredienti[ii].um = this.value;
-        updateSpesa(); updateBudget(); updatePreviews(); saveData();
+        menuChanged();
       });
       row.querySelector('.btn-del-ingr').addEventListener('click', function() {
         const g=+this.dataset.g,p=this.dataset.p,pi=+this.dataset.pi,ii=+this.dataset.ii;
         S().menu[g][p][pi].ingredienti.splice(ii,1);
         renderIngredienti(card,g,p,pi);
-        updateSpesa(); updateBudget(); updatePreviews(); saveData();
+        menuChanged();
       });
 
       // ── Click sull'alert → conferma sicurezza ────
