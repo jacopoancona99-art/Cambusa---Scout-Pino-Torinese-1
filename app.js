@@ -1265,6 +1265,228 @@ function updateSquadriglieRiepilogo() {
       <div class="stat-card" style="flex:1;min-width:120px"><div class="stat-label">Squadriglie</div><div class="stat-value">${sq.length}</div></div>
       <div class="stat-card" style="flex:1;min-width:120px"><div class="stat-label">Ragazzi in squadriglia</div><div class="stat-value">${totMembri}</div></div>
     </div>${avviso}`;
+
+  // Aggiorna anche le sezioni A2 e A3
+  buildStaffDistribuzione();
+  buildFoglioSquadriglie();
+}
+
+// ═══════════════════════════════════════════════════
+// A2 — DISTRIBUZIONE STAFF PER PASTO
+// ═══════════════════════════════════════════════════
+// Solo i pasti principali (no merende/conforto)
+const PASTI_PRINCIPALI = ['colazione','pranzo','cena'];
+const PASTO_LABEL = { colazione:'Colazione', pranzo:'Pranzo', cena:'Cena' };
+const PASTO_EM = { colazione:'☀', pranzo:'🍽', cena:'🌙' };
+
+function getSqPasti() {
+  if (!C().sqPasti) C().sqPasti = {};
+  return C().sqPasti;
+}
+
+// Distribuzione automatica equa degli staff tra le squadriglie:
+// parte da una quota base uguale, i resti vanno alle squadriglie meno numerose.
+function distribuzioneAutoStaff(totStaff) {
+  const sq = getSquadriglie();
+  if (!sq.length || totStaff <= 0) return {};
+  const base = Math.floor(totStaff / sq.length);
+  let resto = totStaff - base * sq.length;
+  // ordina per numero membri crescente: i resti vanno alle meno numerose
+  const ordinate = [...sq].sort((a,b) => (a.membri||0) - (b.membri||0));
+  const result = {};
+  sq.forEach(s => { result[s.id] = base; });
+  for (let i = 0; i < ordinate.length && resto > 0; i++) {
+    result[ordinate[i].id] += 1;
+    resto--;
+  }
+  return result;
+}
+
+function buildStaffDistribuzione() {
+  const card = document.getElementById('sq-staff-card');
+  const list = document.getElementById('sq-staff-list');
+  const totLbl = document.getElementById('sq-staff-tot');
+  if (!card || !list) return;
+
+  const sq = getSquadriglie();
+  const totStaff = totConf();
+  if (totLbl) totLbl.textContent = totStaff;
+
+  // Mostra la card solo se ci sono squadriglie
+  card.style.display = sq.length ? '' : 'none';
+  if (!sq.length) { list.innerHTML = ''; return; }
+
+  const sqPasti = getSqPasti();
+  const pastiAttivi = PASTI_PRINCIPALI.filter(p => C().pastiAttivi?.[p] !== false);
+
+  list.innerHTML = pastiAttivi.map(pasto => {
+    const cfg = sqPasti[pasto] || { modo: 'sq-sole' };
+    const modo = cfg.modo || 'sq-sole';
+    const btn = (val, label) => `<button class="sq-modo-btn ${modo===val?'active':''}" data-pasto="${pasto}" data-modo="${val}"
+      style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid ${modo===val?'#c8773a':'var(--border)'};background:${modo===val?'#fff3e0':'var(--bg)'};color:${modo===val?'#92620a':'var(--slate-2)'};cursor:pointer;font-weight:${modo===val?'600':'500'}">${label}</button>`;
+
+    let assegnazione = '';
+    if (modo === 'staff-ragazzi') {
+      const ass = cfg.assegnati || distribuzioneAutoStaff(totStaff);
+      const somma = Object.values(ass).reduce((s,v)=>s+(parseInt(v)||0),0);
+      const sbil = somma !== totStaff;
+      assegnazione = `<div style="margin-top:8px;padding:8px;background:var(--bg);border-radius:6px">
+        <div style="font-size:10px;color:var(--slate-3);margin-bottom:6px">Staff assegnati a ogni squadriglia (auto-divisi, correggibili):</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${sq.map(s => {
+          const val = ass[s.id] !== undefined ? ass[s.id] : 0;
+          const manual = cfg.assegnati && cfg.assegnati[s.id] !== undefined;
+          return `<div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:10px;color:var(--slate-2)">${s.nome||'Sq'}:</span>
+            <input type="number" min="0" class="sq-staff-input" data-pasto="${pasto}" data-sq="${s.id}" value="${val}"
+              style="width:44px;text-align:center;border:1px solid ${manual?'#c8773a':'var(--border)'};border-radius:5px;padding:3px;font-size:12px;font-weight:600;font-family:inherit;background:${manual?'#fff3e0':'var(--green-50)'};color:${manual?'#92620a':'var(--green-800)'}">
+          </div>`;
+        }).join('')}
+        </div>
+        ${sbil ? `<div style="font-size:10px;color:#c0392b;margin-top:6px">⚠ La somma (${somma}) non corrisponde agli staff totali (${totStaff}).</div>` : ''}
+      </div>`;
+    }
+
+    return `<div style="padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:600;color:var(--slate);min-width:90px">${PASTO_EM[pasto]} ${PASTO_LABEL[pasto]}</span>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${btn('sq-sole','Squadriglie sole')}
+          ${btn('staff-ragazzi','Staff coi ragazzi')}
+          ${btn('solo-staff','Solo staff')}
+        </div>
+      </div>
+      ${assegnazione}
+    </div>`;
+  }).join('');
+
+  // Listeners modo
+  list.querySelectorAll('.sq-modo-btn').forEach(b => {
+    b.addEventListener('click', function() {
+      const pasto = this.dataset.pasto, modo = this.dataset.modo;
+      if (!C().sqPasti) C().sqPasti = {};
+      if (!C().sqPasti[pasto]) C().sqPasti[pasto] = {};
+      C().sqPasti[pasto].modo = modo;
+      // se passa a staff-ragazzi e non c'è assegnazione, crea quella automatica
+      if (modo === 'staff-ragazzi' && !C().sqPasti[pasto].assegnati) {
+        C().sqPasti[pasto].assegnati = distribuzioneAutoStaff(totConf());
+      }
+      saveData();
+      buildStaffDistribuzione();
+      buildFoglioSquadriglie();
+    });
+  });
+
+  // Listeners caselle staff (correzione manuale)
+  list.querySelectorAll('.sq-staff-input').forEach(inp => {
+    inp.addEventListener('input', function() {
+      const pasto = this.dataset.pasto, sqId = this.dataset.sq;
+      if (!C().sqPasti[pasto]) C().sqPasti[pasto] = { modo:'staff-ragazzi' };
+      if (!C().sqPasti[pasto].assegnati) C().sqPasti[pasto].assegnati = distribuzioneAutoStaff(totConf());
+      C().sqPasti[pasto].assegnati[sqId] = parseInt(this.value) || 0;
+      saveData();
+      buildFoglioSquadriglie();
+      // aggiorna avviso somma senza perdere focus: ricostruisci solo se non stai scrivendo — qui va bene un update leggero
+      const cfg = C().sqPasti[pasto];
+      const somma = Object.values(cfg.assegnati).reduce((s,v)=>s+(parseInt(v)||0),0);
+      // colora la casella come manuale
+      this.style.borderColor = '#c8773a';
+      this.style.background = '#fff3e0';
+      this.style.color = '#92620a';
+    });
+  });
+}
+
+// Numero di persone per una squadriglia in un dato pasto, secondo la modalità
+function personePerSqPasto(sqObj, pasto) {
+  const cfg = getSqPasti()[pasto] || { modo:'sq-sole' };
+  const membri = sqObj.membri || 0;
+  if (cfg.modo === 'staff-ragazzi') {
+    const ass = cfg.assegnati || distribuzioneAutoStaff(totConf());
+    return membri + (parseInt(ass[sqObj.id]) || 0);
+  }
+  // sq-sole: solo membri; solo-staff: la squadriglia non cucina (0)
+  if (cfg.modo === 'solo-staff') return 0;
+  return membri;
+}
+
+// ═══════════════════════════════════════════════════
+// A3 — FOGLIO DOSI PER SQUADRIGLIA
+// ═══════════════════════════════════════════════════
+function buildFoglioSquadriglie() {
+  const card = document.getElementById('sq-dosi-card');
+  const cont = document.getElementById('sq-dosi-content');
+  if (!card || !cont) return;
+
+  const sq = getSquadriglie();
+  card.style.display = sq.length ? '' : 'none';
+  if (!sq.length) { cont.innerHTML = ''; return; }
+
+  const pastiAttivi = PASTI_PRINCIPALI.filter(p => C().pastiAttivi?.[p] !== false);
+  const menu = S().menu || {};
+  let html = '';
+
+  // Per ogni squadriglia una sezione
+  sq.forEach(sqObj => {
+    html += `<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
+      <div style="background:#1B4D2E;color:#fff;padding:6px 12px;font-weight:700;font-size:13px">🏕 ${sqObj.nome||'Squadriglia'} — ${sqObj.membri||0} componenti</div>`;
+
+    let haQualcosa = false;
+    for (let g = 1; g <= C().giorni; g++) {
+      const giorno = menu[g] || {};
+      // pasti principali del giorno con dati
+      const pastiConDati = pastiAttivi.filter(pasto => {
+        const cfg = getSqPasti()[pasto] || {modo:'sq-sole'};
+        if (cfg.modo === 'solo-staff') return false; // la sq non cucina
+        return (giorno[pasto]||[]).some(p => p.nome || (p.ingredienti||[]).length);
+      });
+      if (!pastiConDati.length) continue;
+      haQualcosa = true;
+
+      html += `<div style="padding:6px 12px;background:#f5f7f5;font-size:11px;font-weight:600;color:#2d7a47">Giorno ${g}</div>`;
+      pastiConDati.forEach(pasto => {
+        const persone = personePerSqPasto(sqObj, pasto);
+        const cfg = getSqPasti()[pasto] || {modo:'sq-sole'};
+        const nota = cfg.modo === 'staff-ragazzi' ? ' (con staff)' : '';
+        html += `<div style="padding:6px 12px">
+          <div style="font-size:11px;font-weight:600;color:var(--slate);margin-bottom:4px">${PASTO_EM[pasto]} ${PASTO_LABEL[pasto]} — ${persone} persone${nota}</div>`;
+        (giorno[pasto]||[]).filter(p=>p.nome||(p.ingredienti||[]).length).forEach(piatto => {
+          html += `<div style="font-size:11px;margin-left:8px;margin-bottom:2px"><strong>${piatto.nome||'Piatto'}</strong>`;
+          const ingrs = (piatto.ingredienti||[]).filter(i=>i.nome);
+          if (ingrs.length) {
+            const parti = ingrs.map(ingr => {
+              const isPerSq = ingr.perSq;
+              const dose = ingr.dose !== '' && ingr.dose !== undefined ? parseFloat(ingr.dose) : null;
+              if (dose === null || isNaN(dose)) return ingr.nome;
+              // Per-sq: dose assoluta per squadriglia (×1). Altrimenti dose × persone della sq.
+              const tot = isPerSq ? dose : dose * persone;
+              return `${ingr.nome} ${fmtQ(tot)}${ingr.um||''}`;
+            });
+            html += ` <span style="color:var(--slate-3)">— ${parti.join(', ')}</span>`;
+          }
+          html += `</div>`;
+        });
+        html += `</div>`;
+      });
+    }
+    if (!haQualcosa) {
+      html += `<div style="padding:10px 12px;font-size:11px;color:var(--slate-3)">Nessun pasto per squadriglia (controlla il menu e le modalità dei pasti)</div>`;
+    }
+    html += `</div>`;
+  });
+
+  cont.innerHTML = html;
+}
+
+function stampaSquadriglie() {
+  const cont = document.getElementById('sq-dosi-content');
+  if (!cont || !cont.innerHTML.trim()) { showToast('Niente da stampare'); return; }
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>Foglio dosi squadriglie — ${C().nome||'Campo'}</title>
+    <style>body{font-family:system-ui,sans-serif;padding:20px;color:#222}</style></head>
+    <body><h2 style="font-family:Georgia,serif;color:#1B4D2E">${C().nome||'Campo Scout'} — Dosi per squadriglia</h2>${cont.innerHTML}</body></html>`);
+  w.document.close();
+  w.print();
 }
 
 // ═══════════════════════════════════════════════════
