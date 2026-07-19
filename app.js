@@ -53,12 +53,13 @@ function defaultState() {
     conf: { giorni:4, dataInizio:'', dataFine:'', pastoInizio:'cena', pastoFine:'pranzo',
       ragazzi:24, capi:6, cambusieri:2, staff:0, nome:'', budget:0,
       pastiAttivi:{colazione:true,'merenda-mattina':true,pranzo:true,merenda:true,cena:true,conforto:true},
-      intolleranze:[], intolleranzeCount:{}, overridePersone:{}, orariGenerali:{}, orariSingoli:{} },
+      intolleranze:[], intolleranzeCount:{}, overridePersone:{}, orariGenerali:{}, orariSingoli:{}, numSquadriglie:0 },
     menu: {},
     budgetReale: {},
     spesaChecked: {},
     activeMarkets: ['esselunga','coop','lidl','eurospin'],
     scontrini: [],
+    squadriglie: [],
     note: ''
   };
 }
@@ -69,6 +70,8 @@ function S() { return DATA[SECTION] || DATA.branco; }
 function C() { return S().conf; }
 function totP() { return C().ragazzi + C().capi + C().cambusieri + C().staff; }
 function totConf() { return C().capi + C().cambusieri + C().staff; }
+// Numero di squadriglie (solo reparto). Minimo 1 per non azzerare le dosi ×sq.
+function numSq() { return Math.max(1, C().numSquadriglie || 0); }
 function fmtQ(q) { return q >= 1 ? Math.round(q*10)/10 : Math.round(q*100)/100; }
 
 // Persone per giorno specifico (con override opzionale)
@@ -173,7 +176,11 @@ function render() {
   updateBudget();
   updatePreviews();
   renderScontrini();   // scontrini sono campo-level: aggiornali sempre
+  buildSquadriglie();  // squadriglie (solo reparto, ma safe anche altrove)
   loadNote();
+  // Il tab Squadriglie è visibile solo nel reparto
+  const tabSq = document.getElementById('tab-squadriglie');
+  if (tabSq) tabSq.style.display = (SECTION === 'reparto') ? '' : 'none';
   document.querySelectorAll('#market-chips .mchip').forEach(chip => {
     chip.classList.toggle('active', S().activeMarkets.includes(chip.dataset.market));
   });
@@ -365,12 +372,7 @@ async function applyCode() {
 // ═══════════════════════════════════════════════════
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', function() {
-    const tab = this.dataset.tab;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + tab).classList.add('active');
-    localStorage.setItem('cambusa_last_tab', tab);
+    goTab(this.dataset.tab);
   });
 });
 
@@ -378,6 +380,7 @@ function goTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + tab));
   if (tab === 'scontrini') renderScontrini();
+  if (tab === 'squadriglie') buildSquadriglie();
   if (tab === 'note') loadNote();
   // Quando si torna al menu, applica eventuali aggiornamenti Firebase in sospeso
   if (tab === 'menu' && SECTION) { buildMenu(); updateStats(); }
@@ -386,7 +389,9 @@ function goTab(tab) {
 
 function restoreLastTab() {
   const tab = localStorage.getItem('cambusa_last_tab');
-  const valid = ['home','conf','menu','spesa','budget','stampa-menu','stampa-dosi','scontrini','note'];
+  const valid = ['home','conf','menu','squadriglie','spesa','budget','stampa-menu','stampa-dosi','scontrini','note'];
+  // squadriglie solo nel reparto
+  if (tab === 'squadriglie' && SECTION !== 'reparto') return;
   if (tab && valid.includes(tab)) goTab(tab);
 }
 
@@ -460,6 +465,7 @@ function applyConf() {
   conf.staff         = parseInt(document.getElementById('cf-staff').value) || 0;
   conf.nome          = document.getElementById('cf-nome').value || '';
   conf.budget        = parseFloat(document.getElementById('cf-budget').value) || 0;
+  conf.numSquadriglie = parseInt(document.getElementById('cf-squadriglie').value) || 0;
   conf.overridePersone = {};
   conf.pastiAttivi = {};
   document.querySelectorAll('#pasti-chips .chip').forEach(chip => {
@@ -499,6 +505,11 @@ function loadConfIntoForm() {
   document.getElementById('cf-staff').value      = conf.staff;
   document.getElementById('cf-nome').value       = conf.nome || '';
   document.getElementById('cf-budget').value     = conf.budget || '';
+  // Numero squadriglie: solo per il reparto
+  const sqWrap = document.getElementById('cf-squadriglie-wrap');
+  const sqInput = document.getElementById('cf-squadriglie');
+  if (sqWrap) sqWrap.style.display = (SECTION === 'reparto') ? '' : 'none';
+  if (sqInput) sqInput.value = conf.numSquadriglie || 0;
   document.querySelectorAll('#pasti-chips .chip').forEach(chip => {
     const val = conf.pastiAttivi[chip.dataset.pasto];
     chip.classList.toggle('active', val !== false);
@@ -886,6 +897,9 @@ function renderIngredienti(card, g, pasto, idx) {
           <option value="pz">pz</option><option value="cucch">cucch.</option>
           <option value="tazza">tazza</option><option value="q.b.">q.b.</option>
         </select>
+        <button class="ingr-mult-toggle" data-g="${g}" data-p="${pasto}" data-pi="${idx}" data-ii="${ii}"
+                title="Come moltiplicare la dose: per persona o per squadriglia"
+                style="display:${SECTION==='reparto'?'inline-flex':'none'};align-items:center;font-size:10px;font-weight:600;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--slate-2);cursor:pointer;white-space:nowrap;flex-shrink:0">×pers</button>
         <span class="ingr-alert" data-g="${g}" data-p="${pasto}" data-pi="${idx}" data-ii="${ii}"></span>
         <button class="btn-icon btn-del-ingr" data-g="${g}" data-p="${pasto}" data-pi="${idx}" data-ii="${ii}" aria-label="Rimuovi">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -933,6 +947,13 @@ function renderIngredienti(card, g, pasto, idx) {
       row.querySelector('.ingr-um').addEventListener('change', function() {
         const g=+this.dataset.g,p=this.dataset.p,pi=+this.dataset.pi,ii=+this.dataset.ii;
         S().menu[g][p][pi].ingredienti[ii].um = this.value;
+        menuChanged();
+      });
+      row.querySelector('.ingr-mult-toggle').addEventListener('click', function() {
+        const g=+this.dataset.g,p=this.dataset.p,pi=+this.dataset.pi,ii=+this.dataset.ii;
+        const ingr = S().menu[g][p][pi].ingredienti[ii];
+        ingr.perSq = !ingr.perSq;  // alterna persona ↔ squadriglia
+        setMultToggleUI(this, ingr.perSq);
         menuChanged();
       });
       row.querySelector('.btn-del-ingr').addEventListener('click', function() {
@@ -995,6 +1016,12 @@ function renderIngredienti(card, g, pasto, idx) {
     if (document.activeElement !== nomeEl && nomeEl.value !== (ingr.nome||'')) nomeEl.value = ingr.nome||'';
     if (document.activeElement !== doseEl && doseEl.value !== (ingr.dose||'').toString()) doseEl.value = ingr.dose||'';
     if (umEl.value !== (ingr.um||'g')) umEl.value = ingr.um||'g';
+    // Sincronizza il toggle ×pers / ×sq
+    const multBtn = row.querySelector('.ingr-mult-toggle');
+    if (multBtn) {
+      multBtn.style.display = (SECTION === 'reparto') ? 'inline-flex' : 'none';
+      setMultToggleUI(multBtn, !!ingr.perSq);
+    }
 
     // Sincronizza alternativa
     if (altRow && ingr.alt) {
@@ -1008,6 +1035,23 @@ function renderIngredienti(card, g, pasto, idx) {
 
     refreshIngrAlert(wrapper, g, pasto, idx, ii);
   });
+}
+
+// Aggiorna aspetto del toggle ×pers / ×sq
+function setMultToggleUI(btn, perSq) {
+  if (perSq) {
+    btn.textContent = '×sq';
+    btn.style.background = '#fff3e0';
+    btn.style.borderColor = '#c8773a';
+    btn.style.color = '#92620a';
+    btn.title = 'Dose per squadriglia: moltiplicata per il numero di squadriglie';
+  } else {
+    btn.textContent = '×pers';
+    btn.style.background = 'var(--bg)';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--slate-2)';
+    btn.title = 'Dose per persona: moltiplicata per il numero di persone';
+  }
 }
 
 function refreshIngrAlert(wrapper, g, pasto, idx, ii) {
@@ -1062,6 +1106,103 @@ function updateStats() {
     <div class="stat-card"><div class="stat-label">Persone</div><div class="stat-value">${totP()}</div></div>
     <div class="stat-card"><div class="stat-label">Pasti/giorno</div><div class="stat-value">${np}</div></div>
     <div class="stat-card"><div class="stat-label">Pasti totali</div><div class="stat-value">${C().giorni*np}</div></div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// SQUADRIGLIE (solo reparto)
+// ═══════════════════════════════════════════════════
+function getSquadriglie() {
+  if (!Array.isArray(S().squadriglie)) S().squadriglie = [];
+  return S().squadriglie;
+}
+
+function addSquadriglia() {
+  const sq = getSquadriglie();
+  const n = sq.length + 1;
+  sq.push({ id: Date.now(), nome: 'Squadriglia ' + n, membri: 0 });
+  buildSquadriglie();
+  saveData();
+}
+
+function deleteSquadriglia(id) {
+  if (!confirm('Eliminare questa squadriglia?')) return;
+  S().squadriglie = getSquadriglie().filter(s => s.id != id);
+  buildSquadriglie();
+  saveData();
+}
+
+function buildSquadriglie() {
+  const container = document.getElementById('squadriglie-list');
+  const riep = document.getElementById('squadriglie-riepilogo');
+  if (!container) return;
+  const sq = getSquadriglie();
+
+  if (!sq.length) {
+    container.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Nessuna squadriglia — aggiungine una</div>';
+    if (riep) riep.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = sq.map(s => `
+    <div class="sq-row" style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--surface)">
+      <span style="font-size:16px">🏕</span>
+      <input type="text" class="sq-nome" data-id="${s.id}" value="${(s.nome||'').replace(/"/g,'&quot;')}"
+             placeholder="Nome squadriglia"
+             style="flex:1;min-width:0;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--slate)">
+      <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+        <label style="font-size:11px;color:var(--slate-3)">Componenti:</label>
+        <input type="number" class="sq-membri" data-id="${s.id}" value="${s.membri||''}" min="0" placeholder="0"
+               style="width:56px;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:13px;font-weight:600;text-align:center;font-family:inherit;color:var(--green-800);background:var(--green-50)">
+      </div>
+      <button class="btn-icon sq-del" data-id="${s.id}" aria-label="Elimina" style="flex-shrink:0;color:#c8773a">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      </button>
+    </div>`).join('');
+
+  // Listeners
+  container.querySelectorAll('.sq-nome').forEach(inp => {
+    inp.addEventListener('input', function() {
+      const s = getSquadriglie().find(x => x.id == this.dataset.id);
+      if (s) { s.nome = this.value; saveData(); updateSquadriglieRiepilogo(); }
+    });
+  });
+  container.querySelectorAll('.sq-membri').forEach(inp => {
+    inp.addEventListener('input', function() {
+      const s = getSquadriglie().find(x => x.id == this.dataset.id);
+      if (s) { s.membri = parseInt(this.value) || 0; saveData(); updateSquadriglieRiepilogo(); }
+    });
+  });
+  container.querySelectorAll('.sq-del').forEach(btn => {
+    btn.addEventListener('click', function() { deleteSquadriglia(this.dataset.id); });
+  });
+
+  updateSquadriglieRiepilogo();
+}
+
+function updateSquadriglieRiepilogo() {
+  const riep = document.getElementById('squadriglie-riepilogo');
+  if (!riep) return;
+  const sq = getSquadriglie();
+  const totMembri = sq.reduce((s, x) => s + (x.membri||0), 0);
+  const ragazzi = C().ragazzi || 0;
+  const diff = ragazzi - totMembri;
+
+  let avviso = '';
+  if (totMembri !== ragazzi && (totMembri > 0 || ragazzi > 0)) {
+    const color = diff > 0 ? '#92620a' : '#c0392b';
+    const bg = diff > 0 ? '#fff3e0' : '#fdecea';
+    const border = diff > 0 ? '#f5d87a' : '#f5c6c3';
+    avviso = `<div style="font-size:11px;color:${color};background:${bg};border:1px solid ${border};border-radius:6px;padding:8px 10px;margin-top:6px">
+      ⚠ I componenti delle squadriglie (${totMembri}) non coincidono con i ragazzi in configurazione (${ragazzi}).
+      ${diff > 0 ? `Mancano ${diff} ragazzi da assegnare.` : `Ci sono ${-diff} ragazzi in più rispetto alla configurazione.`}
+    </div>`;
+  }
+
+  riep.innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="stat-card" style="flex:1;min-width:120px"><div class="stat-label">Squadriglie</div><div class="stat-value">${sq.length}</div></div>
+      <div class="stat-card" style="flex:1;min-width:120px"><div class="stat-label">Ragazzi in squadriglia</div><div class="stat-value">${totMembri}</div></div>
+    </div>${avviso}`;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1131,8 +1272,13 @@ function getIngr() {
                 nIntoll = Math.max(nIntoll, cnt);
               });
             }
-            addIngr(ingr.nome, ingr.dose, ingr.um, mult,
-                    ingr.alt?.nome, ingr.alt?.dose, ingr.alt?.um, nIntoll);
+            // Se l'ingrediente è "per squadriglia", moltiplica per il numero
+            // di squadriglie invece che per le persone (solo reparto).
+            const effMult = (ingr.perSq && SECTION === 'reparto') ? numSq() : mult;
+            // In modalità ×sq gli intolleranti non si applicano (dose fissa a squadriglia)
+            const effIntoll = (ingr.perSq && SECTION === 'reparto') ? 0 : nIntoll;
+            addIngr(ingr.nome, ingr.dose, ingr.um, effMult,
+                    ingr.alt?.nome, ingr.alt?.dose, ingr.alt?.um, effIntoll);
           });
         } else if (piatto.nome) {
           addIngr(piatto.nome, '', '', mult, null, null, null, 0);
@@ -1606,13 +1752,16 @@ function buildPreviewDosi() {
               <th style="padding:4px 8px;background:#e6f0ea;border-bottom:1px solid #c5dbc7;color:#1B4D2E">U.M.</th>
             </tr></thead><tbody>`;
           ingrs.filter(i=>i.nome).forEach(ingr => {
+            const isPerSq = ingr.perSq && SECTION === 'reparto';
+            const effMult = isPerSq ? numSq() : mult;
             const dose = ingr.dose !== '' && ingr.dose !== undefined ? parseFloat(ingr.dose) : null;
-            const qtot = dose !== null && !isNaN(dose) ? fmtQ(dose * mult) : '—';
+            const qtot = dose !== null && !isNaN(dose) ? fmtQ(dose * effMult) : '—';
             const doseLbl = dose !== null && !isNaN(dose) ? dose : '—';
+            const multLbl = isPerSq ? `×${numSq()} sq` : `×${effMult}`;
             html += `<tr>
-              <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0">${ingr.nome}</td>
+              <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0">${ingr.nome}${isPerSq?' <span style="font-size:9px;color:#92620a;background:#fff3e0;border:1px solid #f5d87a;border-radius:8px;padding:0 5px">per sq</span>':''}</td>
               <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right">${doseLbl}</td>
-              <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700">${qtot}</td>
+              <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700">${qtot} <span style="font-size:8px;color:#aaa">${multLbl}</span></td>
               <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">${ingr.um||'—'}</td>
             </tr>`;
           });

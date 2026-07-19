@@ -50,6 +50,10 @@
       <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       Menu
     </button>
+    <button class="tab-btn" data-tab="squadriglie" id="tab-squadriglie" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Squadriglie
+    </button>
     <button class="tab-btn" data-tab="spesa">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.97 1.61h9.72a2 2 0 001.97-1.61L23 6H6"/></svg>
       Lista spesa
@@ -217,6 +221,15 @@
         <div class="field"><label>Cambusieri/e</label><input type="number" id="cf-cambusieri" value="2" min="0"></div>
         <div class="field"><label>Staff aggiuntivo</label><input type="number" id="cf-staff" value="0" min="0"></div>
       </div>
+      <div id="cf-squadriglie-wrap" class="fgrid-2" style="margin-top:12px;display:none">
+        <div class="field">
+          <label>Numero di squadriglie</label>
+          <input type="number" id="cf-squadriglie" value="0" min="0" placeholder="es. 4">
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end">
+          <span style="font-size:11px;color:var(--slate-3);line-height:1.4">Serve per le dosi contate "per squadriglia" (es. 1 bottiglia d'olio a squadriglia).</span>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -310,6 +323,29 @@
     </div>
     <div class="stat-grid" id="menu-stats"></div>
     <div id="giorni-container"></div>
+  </div>
+
+  <!-- ───── SQUADRIGLIE ───── -->
+  <div class="page" id="page-squadriglie">
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Squadriglie
+        <button class="help-btn" onclick="toggleHelp('help-squadriglie')">?</button>
+      </div>
+      <div class="help-panel" id="help-squadriglie">
+        <strong>Squadriglie</strong> — pianifica le dosi divise per squadriglia (solo reparto).<ul>
+        <li>Aggiungi ogni squadriglia con <strong>nome</strong> e <strong>numero di componenti</strong>.</li>
+        <li>Il menù resta uno solo per tutti: qui definisci solo <em>quante persone</em> cucina ogni squadriglia.</li>
+        <li>Nelle prossime tappe potrai distribuire la staff sui pasti e ottenere il foglio dosi per squadriglia.</li></ul>
+      </div>
+      <div id="squadriglie-list"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addSquadriglia()" style="margin-top:10px">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Aggiungi squadriglia
+      </button>
+      <div id="squadriglie-riepilogo" style="margin-top:14px"></div>
+    </div>
   </div>
 
   <!-- ───── SPESA ───── -->
