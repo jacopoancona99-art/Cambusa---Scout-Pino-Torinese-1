@@ -447,14 +447,56 @@ function applyConf() {
   const conf = C();
   const dataInizio = document.getElementById('cf-data-inizio').value;
   const dataFine   = document.getElementById('cf-data-fine').value;
-  const giorni     = calcolaGiorni(dataInizio, dataFine);
-  if (!giorni || giorni < 1) { showToast('Inserisci date valide'); return; }
-  // Conferma se menu già compilato
-  const hasMenu = Object.keys(S().menu).length > 0 &&
-    Object.values(S().menu).some(g => Object.values(g).some(p => p.length > 0));
-  if (hasMenu && !confirm('Ricalcolare la configurazione cancellerà il menu esistente. Continuare?')) return;
+  const nuoviGiorni = calcolaGiorni(dataInizio, dataFine);
+  if (!nuoviGiorni || nuoviGiorni < 1) { showToast('Inserisci date valide'); return; }
 
-  conf.giorni        = giorni;
+  // Leggi i nuovi pasti attivi (senza ancora applicarli)
+  const nuoviPastiAttivi = {};
+  document.querySelectorAll('#pasti-chips .chip').forEach(chip => {
+    nuoviPastiAttivi[chip.dataset.pasto] = chip.classList.contains('active');
+  });
+
+  const vecchiGiorni = conf.giorni || 0;
+  const menu = S().menu || {};
+
+  // Helper: un pasto ha contenuto?
+  const pastoHaDati = (g, pasto) => {
+    const arr = menu[g]?.[pasto];
+    return Array.isArray(arr) && arr.some(p => p.nome || (p.ingredienti||[]).length);
+  };
+
+  // 1. Giorni che verrebbero eliminati (riduzione) e che contengono dati
+  const giorniEliminati = [];
+  for (let g = nuoviGiorni + 1; g <= vecchiGiorni; g++) {
+    if (menu[g] && Object.keys(menu[g]).some(p => pastoHaDati(g, p))) giorniEliminati.push(g);
+  }
+
+  // 2. Pasti disattivati che contengono dati (su qualsiasi giorno rimasto)
+  const pastiDisattivati = [];
+  Object.keys(nuoviPastiAttivi).forEach(pasto => {
+    const eraAttivo = conf.pastiAttivi?.[pasto] !== false;
+    const oraAttivo = nuoviPastiAttivi[pasto] !== false;
+    if (eraAttivo && !oraAttivo) {
+      // il pasto è stato disattivato — controlla se ha dati nei giorni che restano
+      for (let g = 1; g <= nuoviGiorni; g++) {
+        if (pastoHaDati(g, pasto)) { pastiDisattivati.push(pasto); break; }
+      }
+    }
+  });
+
+  // 3. Se ci sarebbe perdita di dati, chiedi conferma con dettaglio
+  if (giorniEliminati.length || pastiDisattivati.length) {
+    const parti = [];
+    if (giorniEliminati.length) parti.push(`il menu dei giorni ${giorniEliminati.join(', ')}`);
+    if (pastiDisattivati.length) {
+      const nomi = pastiDisattivati.map(p => ({colazione:'colazione','merenda-mattina':'merenda mattina',pranzo:'pranzo',merenda:'merenda',cena:'cena',conforto:'conforto'}[p]||p));
+      parti.push(`i pasti: ${nomi.join(', ')}`);
+    }
+    if (!confirm(`Questa modifica cancellerà ${parti.join(' e ')}.\nIl resto del menu verrà mantenuto. Continuare?`)) return;
+  }
+
+  // 4. Applica la configurazione
+  conf.giorni        = nuoviGiorni;
   conf.dataInizio    = dataInizio;
   conf.dataFine      = dataFine;
   conf.pastoInizio   = document.getElementById('cf-pasto-inizio').value;
@@ -466,20 +508,27 @@ function applyConf() {
   conf.nome          = document.getElementById('cf-nome').value || '';
   conf.budget        = parseFloat(document.getElementById('cf-budget').value) || 0;
   conf.numSquadriglie = parseInt(document.getElementById('cf-squadriglie').value) || 0;
-  conf.overridePersone = {};
-  conf.pastiAttivi = {};
-  document.querySelectorAll('#pasti-chips .chip').forEach(chip => {
-    conf.pastiAttivi[chip.dataset.pasto] = chip.classList.contains('active');
-  });
+  conf.pastiAttivi   = nuoviPastiAttivi;
   conf.intolleranze = [];
   document.querySelectorAll('#intolleranze-chips input[type=checkbox]:checked').forEach(cb => conf.intolleranze.push(cb.dataset.int));
   conf.intolleranzeCount = {};
   document.querySelectorAll('#intolleranze-chips .chip-count-input').forEach(inp => {
     if (inp.value) conf.intolleranzeCount[inp.dataset.int] = inp.value;
   });
-  S().menu = {};
-  S().budgetReale = {};
-  // La configurazione è cambiata: forza una ricostruzione pulita del menu
+
+  // 5. Cancellazione MIRATA (non azzera tutto il menu)
+  // Rimuovi i giorni oltre il nuovo limite
+  Object.keys(menu).forEach(gk => {
+    if (parseInt(gk) > nuoviGiorni) delete menu[gk];
+  });
+  // Rimuovi i pasti disattivati da tutti i giorni
+  Object.keys(nuoviPastiAttivi).forEach(pasto => {
+    if (nuoviPastiAttivi[pasto] === false) {
+      Object.keys(menu).forEach(gk => { if (menu[gk]) delete menu[gk][pasto]; });
+    }
+  });
+
+  // Forza ricostruzione pulita del DOM del menu (i dati validi restano in S().menu)
   document.getElementById('giorni-container').innerHTML = '';
   render();
   saveData();
@@ -1133,47 +1182,60 @@ function deleteSquadriglia(id) {
 
 function buildSquadriglie() {
   const container = document.getElementById('squadriglie-list');
-  const riep = document.getElementById('squadriglie-riepilogo');
   if (!container) return;
   const sq = getSquadriglie();
 
   if (!sq.length) {
     container.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Nessuna squadriglia — aggiungine una</div>';
-    if (riep) riep.innerHTML = '';
+    updateSquadriglieRiepilogo();
     return;
   }
 
-  container.innerHTML = sq.map(s => `
-    <div class="sq-row" style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--surface)">
-      <span style="font-size:16px">🏕</span>
-      <input type="text" class="sq-nome" data-id="${s.id}" value="${(s.nome||'').replace(/"/g,'&quot;')}"
-             placeholder="Nome squadriglia"
-             style="flex:1;min-width:0;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--slate)">
-      <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-        <label style="font-size:11px;color:var(--slate-3)">Componenti:</label>
-        <input type="number" class="sq-membri" data-id="${s.id}" value="${s.membri||''}" min="0" placeholder="0"
-               style="width:56px;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:13px;font-weight:600;text-align:center;font-family:inherit;color:var(--green-800);background:var(--green-50)">
-      </div>
-      <button class="btn-icon sq-del" data-id="${s.id}" aria-label="Elimina" style="flex-shrink:0;color:#c8773a">
-        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-      </button>
-    </div>`).join('');
+  // Se il numero di righe non combacia, ricostruisci la struttura
+  // (evita ricostruzioni durante la digitazione: solo se cambia il conteggio)
+  const existingRows = container.querySelectorAll('.sq-row');
+  if (existingRows.length !== sq.length || container.querySelector('.empty-state')) {
+    container.innerHTML = sq.map(s => `
+      <div class="sq-row" data-id="${s.id}" style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--surface)">
+        <span style="font-size:16px">🏕</span>
+        <input type="text" class="sq-nome" data-id="${s.id}" placeholder="Nome squadriglia"
+               style="flex:1;min-width:0;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--slate)">
+        <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+          <label style="font-size:11px;color:var(--slate-3)">Componenti:</label>
+          <input type="number" class="sq-membri" data-id="${s.id}" min="0" placeholder="0"
+                 style="width:56px;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:13px;font-weight:600;text-align:center;font-family:inherit;color:var(--green-800);background:var(--green-50)">
+        </div>
+        <button class="btn-icon sq-del" data-id="${s.id}" aria-label="Elimina" style="flex-shrink:0;color:#c8773a">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </button>
+      </div>`).join('');
 
-  // Listeners
-  container.querySelectorAll('.sq-nome').forEach(inp => {
-    inp.addEventListener('input', function() {
-      const s = getSquadriglie().find(x => x.id == this.dataset.id);
-      if (s) { s.nome = this.value; saveData(); updateSquadriglieRiepilogo(); }
+    // Listeners (aggiunti una sola volta, alla creazione)
+    container.querySelectorAll('.sq-nome').forEach(inp => {
+      inp.addEventListener('input', function() {
+        const s = getSquadriglie().find(x => x.id == this.dataset.id);
+        if (s) { s.nome = this.value; saveData(); updateSquadriglieRiepilogo(); }
+      });
     });
-  });
-  container.querySelectorAll('.sq-membri').forEach(inp => {
-    inp.addEventListener('input', function() {
-      const s = getSquadriglie().find(x => x.id == this.dataset.id);
-      if (s) { s.membri = parseInt(this.value) || 0; saveData(); updateSquadriglieRiepilogo(); }
+    container.querySelectorAll('.sq-membri').forEach(inp => {
+      inp.addEventListener('input', function() {
+        const s = getSquadriglie().find(x => x.id == this.dataset.id);
+        if (s) { s.membri = parseInt(this.value) || 0; saveData(); updateSquadriglieRiepilogo(); }
+      });
     });
-  });
-  container.querySelectorAll('.sq-del').forEach(btn => {
-    btn.addEventListener('click', function() { deleteSquadriglia(this.dataset.id); });
+    container.querySelectorAll('.sq-del').forEach(btn => {
+      btn.addEventListener('click', function() { deleteSquadriglia(this.dataset.id); });
+    });
+  }
+
+  // Sincronizza i valori senza distruggere gli input (preserva focus/tastiera)
+  sq.forEach(s => {
+    const row = container.querySelector(`.sq-row[data-id="${s.id}"]`);
+    if (!row) return;
+    const nomeEl = row.querySelector('.sq-nome');
+    const membriEl = row.querySelector('.sq-membri');
+    if (nomeEl && document.activeElement !== nomeEl && nomeEl.value !== (s.nome||'')) nomeEl.value = s.nome||'';
+    if (membriEl && document.activeElement !== membriEl && membriEl.value !== (s.membri||'').toString()) membriEl.value = s.membri||'';
   });
 
   updateSquadriglieRiepilogo();
