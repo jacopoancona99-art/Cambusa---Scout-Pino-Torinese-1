@@ -94,11 +94,14 @@ body {
 }
 #tabs-bar::-webkit-scrollbar { display: none; }
 #tabs-bar-inner {
-  display: inline-flex; min-width: 100%;
-  justify-content: center;
+  display: flex; width: max-content; min-width: 100%;
   max-width: 960px; margin: 0 auto;
   padding: 0 12px;
 }
+/* i tab si spingono ai lati con auto-margin: centrati se c'è spazio,
+   allineati a sinistra (senza taglio) quando vanno in overflow */
+#tabs-bar-inner > :first-child { margin-left: auto; }
+#tabs-bar-inner > :last-child  { margin-right: auto; }
 .tab-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 0 16px; height: 40px;
