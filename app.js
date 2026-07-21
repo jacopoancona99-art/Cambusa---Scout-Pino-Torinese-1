@@ -16,27 +16,111 @@ const IMAP = {
   senape:['senape','mostarda']
 };
 
+// Prezzi indicativi 2026 (media dettaglio Italia). q = dose/persona di riferimento
+// (usata solo se non inserisci tu la dose), u = unità del prezzo, p = €/unità.
+// Prezzi aggiornati con ricerche luglio 2026 per le categorie che pesano di più.
 const PB = {
-  'pasta':{q:.5,u:'kg',p:1.2},'riso':{q:.15,u:'kg',p:1.5},'pane':{q:.15,u:'kg',p:3.5},
-  'pollo':{q:.2,u:'kg',p:7.5},'carne macinata':{q:.15,u:'kg',p:9.0},
-  'uova':{q:.5,u:'pz',p:.3},'latte':{q:.25,u:'L',p:1.3},'burro':{q:.02,u:'kg',p:5.5},
-  'olio evo':{q:.03,u:'L',p:7.0},'pomodori pelati':{q:.12,u:'kg',p:1.5},
-  'cipolla':{q:.05,u:'kg',p:1.0},'aglio':{q:.01,u:'kg',p:3.0},'patate':{q:.2,u:'kg',p:1.2},
-  'carote':{q:.1,u:'kg',p:1.0},'zucchine':{q:.12,u:'kg',p:1.8},'peperoni':{q:.12,u:'kg',p:2.5},
-  'insalata':{q:.08,u:'kg',p:2.0},'mozzarella':{q:.08,u:'kg',p:6.5},'parmigiano':{q:.03,u:'kg',p:14.0},
-  'formaggio':{q:.06,u:'kg',p:8.0},'tonno':{q:.08,u:'kg',p:6.0},'fagioli':{q:.1,u:'kg',p:1.8},
-  'lenticchie':{q:.1,u:'kg',p:2.2},'ceci':{q:.1,u:'kg',p:2.0},'zucchero':{q:.02,u:'kg',p:1.2},
-  'caffè':{q:.01,u:'kg',p:12.0},'tè':{q:.005,u:'kg',p:15.0},'biscotti':{q:.1,u:'kg',p:3.5},
-  'fette biscottate':{q:.08,u:'kg',p:2.5},'marmellata':{q:.04,u:'kg',p:4.0},
-  'nutella':{q:.04,u:'kg',p:7.0},'succo di frutta':{q:.3,u:'L',p:1.5},'frutta':{q:.2,u:'kg',p:2.5},
-  'sale':{q:.01,u:'kg',p:.5},'pepe':{q:.002,u:'kg',p:8.0},'dado':{q:.005,u:'kg',p:5.0},
-  'brodo':{q:.3,u:'L',p:1.2},'farina':{q:.1,u:'kg',p:1.0},'cacao':{q:.02,u:'kg',p:8.0},
-  'yogurt':{q:.12,u:'kg',p:2.0},'prosciutto':{q:.05,u:'kg',p:18.0},'salame':{q:.05,u:'kg',p:15.0},
-  'salsiccia':{q:.12,u:'kg',p:7.0},'spinaci':{q:.15,u:'kg',p:2.0},'piselli':{q:.1,u:'kg',p:2.0},
-  'mais':{q:.1,u:'kg',p:1.5},'aceto':{q:.02,u:'L',p:1.5},'maionese':{q:.03,u:'kg',p:3.5},
-  'ketchup':{q:.03,u:'kg',p:3.0},'panna':{q:.1,u:'L',p:1.8},'branzino':{q:.18,u:'kg',p:12.0},
-  'salmone':{q:.15,u:'kg',p:16.0},'crackers':{q:.08,u:'kg',p:3.0},'noci':{q:.03,u:'kg',p:12.0},
-  'nocciole':{q:.03,u:'kg',p:14.0},'cioccolato':{q:.05,u:'kg',p:8.0},'mandorle':{q:.03,u:'kg',p:13.0}
+  // ── PASTA / CEREALI / PANE ──
+  'pasta':{q:.1,u:'kg',p:1.6},'pasta corta':{q:.1,u:'kg',p:1.6},'pasta lunga':{q:.1,u:'kg',p:1.6},
+  'spaghetti':{q:.1,u:'kg',p:1.6},'penne':{q:.1,u:'kg',p:1.6},'fusilli':{q:.1,u:'kg',p:1.6},
+  'pasta integrale':{q:.1,u:'kg',p:2.0},'pasta all\'uovo':{q:.1,u:'kg',p:3.5},
+  'riso':{q:.09,u:'kg',p:2.8},'riso integrale':{q:.09,u:'kg',p:3.2},'orzo':{q:.08,u:'kg',p:2.5},
+  'farro':{q:.08,u:'kg',p:3.5},'cous cous':{q:.08,u:'kg',p:3.0},'polenta':{q:.08,u:'kg',p:2.0},
+  'gnocchi':{q:.2,u:'kg',p:3.0},'pane':{q:.12,u:'kg',p:3.5},'pane in cassetta':{q:.08,u:'kg',p:4.0},
+  'pancarré':{q:.08,u:'kg',p:4.0},'grissini':{q:.03,u:'kg',p:5.0},'crackers':{q:.05,u:'kg',p:5.0},
+  'fette biscottate':{q:.05,u:'kg',p:4.5},'pizza':{q:.2,u:'kg',p:5.0},'focaccia':{q:.12,u:'kg',p:6.0},
+  'farina':{q:.1,u:'kg',p:1.4},'farina 00':{q:.1,u:'kg',p:1.4},'pangrattato':{q:.02,u:'kg',p:2.5},
+  'lievito':{q:.01,u:'kg',p:12.0},'cereali':{q:.05,u:'kg',p:6.0},'muesli':{q:.05,u:'kg',p:7.0},
+  'avena':{q:.05,u:'kg',p:3.0},'tortellini':{q:.12,u:'kg',p:8.0},'ravioli':{q:.12,u:'kg',p:8.0},
+
+  // ── CARNE ──
+  'pollo':{q:.18,u:'kg',p:8.5},'petto di pollo':{q:.18,u:'kg',p:13.5},'cosce di pollo':{q:.22,u:'kg',p:6.5},
+  'fusi di pollo':{q:.22,u:'kg',p:5.5},'tacchino':{q:.18,u:'kg',p:11.0},'fesa di tacchino':{q:.15,u:'kg',p:13.0},
+  'carne macinata':{q:.13,u:'kg',p:12.0},'macinato':{q:.13,u:'kg',p:12.0},'manzo':{q:.15,u:'kg',p:16.0},
+  'vitello':{q:.15,u:'kg',p:19.0},'maiale':{q:.15,u:'kg',p:7.5},'lonza':{q:.15,u:'kg',p:9.0},
+  'salsiccia':{q:.13,u:'kg',p:8.5},'salsicce':{q:.13,u:'kg',p:8.5},'hamburger':{q:.13,u:'kg',p:11.0},
+  'wurstel':{q:.1,u:'kg',p:7.0},'bistecca':{q:.18,u:'kg',p:18.0},'spezzatino':{q:.15,u:'kg',p:13.0},
+  'arrosto':{q:.18,u:'kg',p:12.0},'costine':{q:.25,u:'kg',p:9.0},'coniglio':{q:.2,u:'kg',p:10.0},
+  'prosciutto':{q:.05,u:'kg',p:18.0},'prosciutto cotto':{q:.05,u:'kg',p:16.0},'prosciutto crudo':{q:.05,u:'kg',p:28.0},
+  'speck':{q:.05,u:'kg',p:26.0},'salame':{q:.05,u:'kg',p:16.0},'mortadella':{q:.05,u:'kg',p:11.0},
+  'bresaola':{q:.05,u:'kg',p:35.0},'pancetta':{q:.05,u:'kg',p:12.0},'bacon':{q:.05,u:'kg',p:12.0},
+  'würstel':{q:.1,u:'kg',p:7.0},
+
+  // ── PESCE ──
+  'tonno':{q:.06,u:'kg',p:15.0},'tonno in scatola':{q:.06,u:'kg',p:15.0},'salmone':{q:.15,u:'kg',p:18.0},
+  'salmone affumicato':{q:.05,u:'kg',p:40.0},'branzino':{q:.2,u:'kg',p:14.0},'orata':{q:.2,u:'kg',p:14.0},
+  'merluzzo':{q:.18,u:'kg',p:12.0},'platessa':{q:.18,u:'kg',p:11.0},'bastoncini':{q:.12,u:'kg',p:9.0},
+  'bastoncini di pesce':{q:.12,u:'kg',p:9.0},'gamberi':{q:.12,u:'kg',p:18.0},'gamberetti':{q:.1,u:'kg',p:16.0},
+  'sgombro':{q:.08,u:'kg',p:12.0},'acciughe':{q:.02,u:'kg',p:25.0},'alici':{q:.02,u:'kg',p:25.0},
+  'vongole':{q:.15,u:'kg',p:10.0},'calamari':{q:.15,u:'kg',p:14.0},'seppie':{q:.15,u:'kg',p:13.0},
+
+  // ── UOVA / LATTICINI ──
+  'uova':{q:1.5,u:'pz',p:.32},'uovo':{q:1.5,u:'pz',p:.32},'latte':{q:.2,u:'L',p:1.4},
+  'latte intero':{q:.2,u:'L',p:1.4},'latte scremato':{q:.2,u:'L',p:1.4},'panna':{q:.05,u:'L',p:3.5},
+  'panna da cucina':{q:.05,u:'L',p:3.5},'burro':{q:.02,u:'kg',p:9.0},'yogurt':{q:.125,u:'kg',p:3.5},
+  'yogurt greco':{q:.125,u:'kg',p:5.0},'mozzarella':{q:.08,u:'kg',p:8.0},'mozzarella di bufala':{q:.08,u:'kg',p:14.0},
+  'parmigiano':{q:.02,u:'kg',p:15.0},'grana':{q:.02,u:'kg',p:13.0},'pecorino':{q:.02,u:'kg',p:16.0},
+  'formaggio':{q:.05,u:'kg',p:11.0},'formaggio spalmabile':{q:.03,u:'kg',p:9.0},'ricotta':{q:.06,u:'kg',p:6.0},
+  'scamorza':{q:.06,u:'kg',p:10.0},'provola':{q:.06,u:'kg',p:10.0},'stracchino':{q:.05,u:'kg',p:9.0},
+  'philadelphia':{q:.03,u:'kg',p:11.0},'gorgonzola':{q:.05,u:'kg',p:12.0},'emmental':{q:.05,u:'kg',p:13.0},
+  'fontina':{q:.05,u:'kg',p:14.0},'formaggini':{q:.02,u:'kg',p:11.0},'sottilette':{q:.02,u:'kg',p:11.0},
+
+  // ── VERDURE / ORTAGGI ──
+  'pomodori':{q:.15,u:'kg',p:2.5},'pomodoro':{q:.15,u:'kg',p:2.5},'pomodori pelati':{q:.12,u:'kg',p:2.8},
+  'pelati':{q:.12,u:'kg',p:2.8},'passata':{q:.12,u:'kg',p:2.2},'passata di pomodoro':{q:.12,u:'kg',p:2.2},
+  'polpa di pomodoro':{q:.12,u:'kg',p:2.5},'pomodorini':{q:.1,u:'kg',p:3.5},'cipolla':{q:.04,u:'kg',p:1.5},
+  'cipolle':{q:.04,u:'kg',p:1.5},'aglio':{q:.005,u:'kg',p:6.0},'patate':{q:.2,u:'kg',p:1.3},
+  'carote':{q:.08,u:'kg',p:1.3},'carota':{q:.08,u:'kg',p:1.3},'zucchine':{q:.12,u:'kg',p:2.2},
+  'zucchina':{q:.12,u:'kg',p:2.2},'melanzane':{q:.12,u:'kg',p:2.2},'peperoni':{q:.12,u:'kg',p:2.8},
+  'peperone':{q:.12,u:'kg',p:2.8},'insalata':{q:.06,u:'kg',p:3.0},'lattuga':{q:.06,u:'kg',p:2.5},
+  'rucola':{q:.03,u:'kg',p:8.0},'spinaci':{q:.15,u:'kg',p:3.0},'broccoli':{q:.15,u:'kg',p:2.5},
+  'cavolfiore':{q:.15,u:'kg',p:2.2},'cavolo':{q:.15,u:'kg',p:1.8},'verza':{q:.15,u:'kg',p:1.8},
+  'finocchi':{q:.12,u:'kg',p:2.2},'sedano':{q:.05,u:'kg',p:2.0},'funghi':{q:.1,u:'kg',p:5.0},
+  'funghi champignon':{q:.1,u:'kg',p:4.5},'piselli':{q:.08,u:'kg',p:2.5},'fagiolini':{q:.12,u:'kg',p:3.5},
+  'mais':{q:.08,u:'kg',p:3.0},'zucca':{q:.15,u:'kg',p:2.0},'radicchio':{q:.06,u:'kg',p:3.5},
+  'pomodori secchi':{q:.02,u:'kg',p:12.0},'olive':{q:.03,u:'kg',p:6.0},'basilico':{q:.005,u:'kg',p:20.0},
+  'prezzemolo':{q:.005,u:'kg',p:15.0},'peperoncino':{q:.002,u:'kg',p:15.0},
+
+  // ── LEGUMI ──
+  'fagioli':{q:.08,u:'kg',p:2.5},'ceci':{q:.08,u:'kg',p:2.2},'lenticchie':{q:.08,u:'kg',p:2.8},
+  'fagioli borlotti':{q:.08,u:'kg',p:2.5},'fagioli cannellini':{q:.08,u:'kg',p:2.5},
+
+  // ── FRUTTA ──
+  'frutta':{q:.2,u:'kg',p:2.5},'mele':{q:.2,u:'kg',p:2.2},'mela':{q:.2,u:'kg',p:2.2},
+  'banane':{q:.2,u:'kg',p:2.0},'banana':{q:.2,u:'kg',p:2.0},'arance':{q:.2,u:'kg',p:2.2},
+  'pere':{q:.2,u:'kg',p:2.5},'pesche':{q:.2,u:'kg',p:2.8},'albicocche':{q:.15,u:'kg',p:3.0},
+  'fragole':{q:.12,u:'kg',p:5.0},'uva':{q:.15,u:'kg',p:3.5},'anguria':{q:.3,u:'kg',p:1.2},
+  'melone':{q:.25,u:'kg',p:2.0},'kiwi':{q:.12,u:'kg',p:3.5},'limoni':{q:.05,u:'kg',p:2.5},
+  'limone':{q:.05,u:'kg',p:2.5},'frutta secca':{q:.03,u:'kg',p:14.0},
+
+  // ── COLAZIONE / DOLCI ──
+  'biscotti':{q:.05,u:'kg',p:5.0},'marmellata':{q:.03,u:'kg',p:6.0},'confettura':{q:.03,u:'kg',p:6.0},
+  'miele':{q:.02,u:'kg',p:10.0},'nutella':{q:.03,u:'kg',p:8.0},'crema spalmabile':{q:.03,u:'kg',p:7.0},
+  'zucchero':{q:.02,u:'kg',p:1.2},'zucchero di canna':{q:.02,u:'kg',p:2.5},'cacao':{q:.01,u:'kg',p:10.0},
+  'cioccolato':{q:.03,u:'kg',p:10.0},'cioccolata':{q:.03,u:'kg',p:10.0},'merendine':{q:.05,u:'kg',p:8.0},
+  'torta':{q:.1,u:'kg',p:8.0},'croissant':{q:.05,u:'kg',p:8.0},'brioche':{q:.05,u:'kg',p:8.0},
+  'succo di frutta':{q:.25,u:'L',p:1.8},'succo':{q:.25,u:'L',p:1.8},'the':{q:.003,u:'kg',p:15.0},
+  'tè':{q:.003,u:'kg',p:15.0},'caffè':{q:.008,u:'kg',p:14.0},'orzo':{q:.008,u:'kg',p:8.0},
+  'zucchero a velo':{q:.01,u:'kg',p:3.0},'panna montata':{q:.03,u:'L',p:5.0},
+
+  // ── CONDIMENTI / DISPENSA ──
+  'olio':{q:.02,u:'L',p:11.0},'olio evo':{q:.02,u:'L',p:11.0},'olio extravergine':{q:.02,u:'L',p:11.0},
+  'olio di semi':{q:.02,u:'L',p:2.5},'olio di oliva':{q:.02,u:'L',p:8.0},'aceto':{q:.01,u:'L',p:2.0},
+  'aceto balsamico':{q:.01,u:'L',p:6.0},'sale':{q:.008,u:'kg',p:.6},'pepe':{q:.001,u:'kg',p:15.0},
+  'dado':{q:.004,u:'kg',p:8.0},'brodo':{q:.25,u:'L',p:1.5},'maionese':{q:.02,u:'kg',p:4.5},
+  'ketchup':{q:.02,u:'kg',p:3.5},'senape':{q:.01,u:'kg',p:5.0},'besciamella':{q:.05,u:'L',p:3.5},
+  'pesto':{q:.03,u:'kg',p:9.0},'sugo':{q:.12,u:'kg',p:3.0},'sugo pronto':{q:.12,u:'kg',p:3.0},
+  'spezie':{q:.002,u:'kg',p:20.0},'origano':{q:.002,u:'kg',p:18.0},'noce moscata':{q:.001,u:'kg',p:30.0},
+  'zafferano':{q:.0002,u:'kg',p:800.0},'cannella':{q:.002,u:'kg',p:20.0},'curry':{q:.002,u:'kg',p:15.0},
+  'noci':{q:.03,u:'kg',p:12.0},'nocciole':{q:.03,u:'kg',p:14.0},'mandorle':{q:.03,u:'kg',p:13.0},
+  'pinoli':{q:.01,u:'kg',p:40.0},'uvetta':{q:.02,u:'kg',p:6.0},'amido':{q:.01,u:'kg',p:3.0},
+  'maizena':{q:.01,u:'kg',p:3.5},
+
+  // ── BEVANDE ──
+  'acqua':{q:.5,u:'L',p:.3},'acqua naturale':{q:.5,u:'L',p:.3},'acqua frizzante':{q:.5,u:'L',p:.35},
+  'coca cola':{q:.3,u:'L',p:1.5},'aranciata':{q:.3,u:'L',p:1.3},'bibite':{q:.3,u:'L',p:1.3},
+  'birra':{q:.33,u:'L',p:2.0},'vino':{q:.15,u:'L',p:4.0},'latte di mandorla':{q:.2,u:'L',p:2.5},
+  'latte di soia':{q:.2,u:'L',p:2.0}
 };
 
 const VM = {esselunga:1.05,coop:1.03,lidl:.93,eurospin:.88,carrefour:1.02,penny:.91,md:.89};
@@ -1741,6 +1825,7 @@ function updateBudget() {
       <th>Totale stimato</th>
     </tr></thead><tbody>`;
 
+  let senzaPrezzo = 0;
   keys.sort().forEach(k => {
     const item = counts[k];
     const q = item.qty;
@@ -1750,6 +1835,7 @@ function updateBudget() {
     if (q <= 0) return;
     const qtaLabel = `${fmtQ(q)} ${umUsata}`;
     if (!base || !pm) {
+      senzaPrezzo++;
       hS += `<tr><td>${k}</td><td style="color:var(--slate-3)">${qtaLabel}</td><td style="color:var(--slate-3)">—</td><td style="color:var(--slate-3);font-size:10px">prezzo non disponibile</td></tr>`;
       return;
     }
@@ -1766,7 +1852,8 @@ function updateBudget() {
 
   hS += `</tbody></table></div>
     <div class="budget-total-row"><span>Totale preventivo</span><span style="color:var(--green-800)">${totS.toFixed(2)} €</span></div>
-    <div style="padding:6px 14px;font-size:10px;color:var(--slate-3)">Pro capite: ${(totS/Math.max(1,totP())).toFixed(2)} €/pers. · ${(totS/Math.max(1,C().giorni)).toFixed(2)} €/giorno</div>`;
+    <div style="padding:6px 14px;font-size:10px;color:var(--slate-3)">Pro capite: ${(totS/Math.max(1,totP())).toFixed(2)} €/pers. · ${(totS/Math.max(1,C().giorni)).toFixed(2)} €/giorno</div>
+    ${senzaPrezzo ? `<div style="padding:6px 14px;font-size:10px;color:#92620a;background:#fff8f0">ℹ ${senzaPrezzo} ingredient${senzaPrezzo===1?'e senza stima di prezzo':'i senza stima di prezzo'}: il preventivo non li include. Puoi inserire il prezzo reale nella lista spesa.</div>` : ''}`;
   stimEl.innerHTML = hS;
 
   // ── CONSUNTIVO REALE (read-only — valori da lista spesa) ────
