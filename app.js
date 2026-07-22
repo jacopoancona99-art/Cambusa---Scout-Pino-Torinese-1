@@ -620,6 +620,87 @@ function applyConf() {
   showToast('Configurazione salvata');
 }
 
+// ═══════════════════════════════════════════════════
+// MENÙ PRONTI (preset)
+// ═══════════════════════════════════════════════════
+function openMenuPronti() {
+  if (!SECTION) { showToast('Seleziona prima una sezione dalla Home'); return; }
+  const list = document.getElementById('menu-pronti-list');
+  if (typeof MENU_PRONTI === 'undefined' || !MENU_PRONTI.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--slate-3)">Nessun menù disponibile.</div>';
+  } else {
+    list.innerHTML = MENU_PRONTI.map(p => `
+      <button class="menu-pronto-item" data-id="${p.id}" style="display:block;width:100%;text-align:left;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);margin-bottom:8px;cursor:pointer;font-family:inherit">
+        <div style="font-weight:700;font-size:14px;color:var(--slate)">${p.nome} · ${p.giorni} giorni</div>
+        ${p.descrizione ? `<div style="font-size:11px;color:var(--slate-3);margin-top:2px">${p.descrizione}</div>` : ''}
+      </button>`).join('');
+    list.querySelectorAll('.menu-pronto-item').forEach(btn => {
+      btn.addEventListener('click', function() { applyPreset(this.dataset.id); });
+    });
+  }
+  document.getElementById('menu-pronti-overlay').style.display = 'block';
+  document.getElementById('menu-pronti-popup').style.display = 'block';
+}
+
+function closeMenuPronti() {
+  document.getElementById('menu-pronti-overlay').style.display = 'none';
+  document.getElementById('menu-pronti-popup').style.display = 'none';
+}
+
+function applyPreset(id) {
+  const preset = (typeof MENU_PRONTI !== 'undefined') ? MENU_PRONTI.find(p => p.id === id) : null;
+  if (!preset) return;
+
+  const hasMenu = Object.keys(S().menu||{}).length > 0 &&
+    Object.values(S().menu).some(g => Object.values(g).some(arr => Array.isArray(arr) && arr.some(p => p.nome || (p.ingredienti||[]).length)));
+
+  if (hasMenu) {
+    if (!confirm(`Caricare il menù "${preset.nome}"?\nSostituirà il menù attuale (le presenze e la configurazione restano invariate).`)) return;
+  }
+
+  const oggi = C().dataInizio || '';
+  const dataInizio = prompt('Data di inizio campo (AAAA-MM-GG):', oggi);
+  if (!dataInizio) return;
+  const d = new Date(dataInizio);
+  if (isNaN(d.getTime())) { showToast('Data non valida'); return; }
+
+  const conf = C();
+  conf.giorni = preset.giorni;
+  conf.dataInizio = dataInizio;
+  const dFine = new Date(d); dFine.setDate(dFine.getDate() + preset.giorni - 1);
+  conf.dataFine = dFine.toISOString().slice(0,10);
+  if (preset.pastoInizio) conf.pastoInizio = preset.pastoInizio;
+  if (preset.pastoFine)   conf.pastoFine   = preset.pastoFine;
+
+  const nuovoMenu = {};
+  Object.keys(preset.menu).forEach(g => {
+    nuovoMenu[g] = {};
+    Object.keys(preset.menu[g]).forEach(pasto => {
+      nuovoMenu[g][pasto] = preset.menu[g][pasto].map(piatto => ({
+        nome: piatto.nome || '',
+        ingredienti: (piatto.ingredienti||[]).map(i => ({
+          nome: i.nome||'', dose: (i.dose ?? ''), um: i.um||'g',
+          ...(i.perSq ? {perSq:true} : {}),
+          ...(i.abs ? {abs:true} : {})
+        }))
+      }));
+    });
+    // Assicura che i pasti usati siano attivi
+    Object.keys(preset.menu[g]).forEach(pasto => {
+      if (!conf.pastiAttivi) conf.pastiAttivi = {};
+      conf.pastiAttivi[pasto] = true;
+    });
+  });
+  S().menu = nuovoMenu;
+
+  closeMenuPronti();
+  document.getElementById('giorni-container').innerHTML = '';
+  render();
+  saveData();
+  goTab('menu');
+  showToast(`Menù "${preset.nome}" caricato ✓`);
+}
+
 function loadConfIntoForm() {
   if (!SECTION) return;
   const conf = C();
@@ -1640,11 +1721,16 @@ function getIngr() {
                 nIntoll = Math.max(nIntoll, cnt);
               });
             }
-            // Se l'ingrediente è "per squadriglia", moltiplica per il numero
-            // di squadriglie invece che per le persone (solo reparto).
-            const effMult = (ingr.perSq && SECTION === 'reparto') ? numSq() : mult;
-            // In modalità ×sq gli intolleranti non si applicano (dose fissa a squadriglia)
-            const effIntoll = (ingr.perSq && SECTION === 'reparto') ? 0 : nIntoll;
+            // Modalità di moltiplicazione:
+            //  - abs: quantità assoluta (×1, es. gara di cucina)
+            //  - perSq (reparto): dose × numero squadriglie
+            //  - default: dose × persone del pasto
+            let effMult;
+            if (ingr.abs) effMult = 1;
+            else if (ingr.perSq && SECTION === 'reparto') effMult = numSq();
+            else effMult = mult;
+            // Con abs o ×sq gli intolleranti non si applicano
+            const effIntoll = (ingr.abs || (ingr.perSq && SECTION === 'reparto')) ? 0 : nIntoll;
             addIngr(ingr.nome, ingr.dose, ingr.um, effMult,
                     ingr.alt?.nome, ingr.alt?.dose, ingr.alt?.um, effIntoll);
           });
