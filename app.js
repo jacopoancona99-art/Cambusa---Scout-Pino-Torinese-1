@@ -678,11 +678,13 @@ function applyPreset(id) {
     Object.keys(preset.menu[g]).forEach(pasto => {
       nuovoMenu[g][pasto] = preset.menu[g][pasto].map(piatto => ({
         nome: piatto.nome || '',
-        ingredienti: (piatto.ingredienti||[]).map(i => ({
-          nome: i.nome||'', dose: (i.dose ?? ''), um: i.um||'g',
-          ...(i.perSq ? {perSq:true} : {}),
-          ...(i.abs ? {abs:true} : {})
-        }))
+        ingredienti: (piatto.ingredienti||[]).map(i => {
+          const ni = { nome: i.nome||'', dose: (i.dose ?? ''), um: i.um||'g' };
+          // normalizza la modalità: mult esplicito, oppure dai vecchi flag
+          const mode = i.mult || (i.abs ? 'tot' : (i.perSq ? 'sq' : 'pers'));
+          if (mode !== 'pers') { ni.mult = mode; ni.perSq = (mode==='sq'); ni.abs = (mode==='tot'); }
+          return ni;
+        })
       }));
     });
     // Assicura che i pasti usati siano attivi
@@ -1112,7 +1114,7 @@ function renderIngredienti(card, g, pasto, idx) {
           <option value="tazza">tazza</option><option value="q.b.">q.b.</option>
         </select>
         <button class="ingr-mult-toggle" data-g="${g}" data-p="${pasto}" data-pi="${idx}" data-ii="${ii}"
-                title="Come moltiplicare la dose: per persona o per squadriglia"
+                title="Modalità dose: per persona, per squadriglia, o totale assoluto"
                 style="display:${SECTION==='reparto'?'inline-flex':'none'};align-items:center;font-size:10px;font-weight:600;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--slate-2);cursor:pointer;white-space:nowrap;flex-shrink:0">×pers</button>
         <span class="ingr-alert" data-g="${g}" data-p="${pasto}" data-pi="${idx}" data-ii="${ii}"></span>
         <button class="btn-icon btn-del-ingr" data-g="${g}" data-p="${pasto}" data-pi="${idx}" data-ii="${ii}" aria-label="Rimuovi">
@@ -1166,8 +1168,11 @@ function renderIngredienti(card, g, pasto, idx) {
       row.querySelector('.ingr-mult-toggle').addEventListener('click', function() {
         const g=+this.dataset.g,p=this.dataset.p,pi=+this.dataset.pi,ii=+this.dataset.ii;
         const ingr = S().menu[g][p][pi].ingredienti[ii];
-        ingr.perSq = !ingr.perSq;  // alterna persona ↔ squadriglia
-        setMultToggleUI(this, ingr.perSq);
+        // Cicla: pers → sq → tot → pers
+        const cur = ingrMode(ingr);
+        const next = cur === 'pers' ? 'sq' : (cur === 'sq' ? 'tot' : 'pers');
+        setIngrMode(ingr, next);
+        setMultToggleUI(this, next);
         menuChanged();
       });
       row.querySelector('.btn-del-ingr').addEventListener('click', function() {
@@ -1234,7 +1239,7 @@ function renderIngredienti(card, g, pasto, idx) {
     const multBtn = row.querySelector('.ingr-mult-toggle');
     if (multBtn) {
       multBtn.style.display = (SECTION === 'reparto') ? 'inline-flex' : 'none';
-      setMultToggleUI(multBtn, !!ingr.perSq);
+      setMultToggleUI(multBtn, ingrMode(ingr));
     }
 
     // Sincronizza alternativa
@@ -1251,19 +1256,37 @@ function renderIngredienti(card, g, pasto, idx) {
   });
 }
 
-// Aggiorna aspetto del toggle ×pers / ×sq
-function setMultToggleUI(btn, perSq) {
-  if (perSq) {
+// Modalità di moltiplicazione di un ingrediente: 'pers' | 'sq' | 'tot'
+// Legge sia il nuovo campo mult sia i vecchi flag perSq/abs (compatibilità).
+function ingrMode(ingr) {
+  if (ingr.mult) return ingr.mult;
+  if (ingr.abs)  return 'tot';
+  if (ingr.perSq) return 'sq';
+  return 'pers';
+}
+function setIngrMode(ingr, mode) {
+  ingr.mult = mode;
+  // mantieni sincronizzati i vecchi flag per retro-compatibilità
+  ingr.perSq = (mode === 'sq');
+  ingr.abs   = (mode === 'tot');
+}
+
+// Aggiorna aspetto del toggle ×pers / ×sq / ×tot
+function setMultToggleUI(btn, mode) {
+  // accetta sia booleano (vecchie chiamate) sia stringa
+  if (mode === true) mode = 'sq';
+  if (mode === false) mode = 'pers';
+  if (mode === 'sq') {
     btn.textContent = '×sq';
-    btn.style.background = '#fff3e0';
-    btn.style.borderColor = '#c8773a';
-    btn.style.color = '#92620a';
+    btn.style.background = '#fff3e0'; btn.style.borderColor = '#c8773a'; btn.style.color = '#92620a';
     btn.title = 'Dose per squadriglia: moltiplicata per il numero di squadriglie';
+  } else if (mode === 'tot') {
+    btn.textContent = '×tot';
+    btn.style.background = '#e8f0fe'; btn.style.borderColor = '#3b82f6'; btn.style.color = '#1e40af';
+    btn.title = 'Quantità totale assoluta: non moltiplicata per nessuno (es. gara di cucina)';
   } else {
     btn.textContent = '×pers';
-    btn.style.background = 'var(--bg)';
-    btn.style.borderColor = 'var(--border)';
-    btn.style.color = 'var(--slate-2)';
+    btn.style.background = 'var(--bg)'; btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--slate-2)';
     btn.title = 'Dose per persona: moltiplicata per il numero di persone';
   }
 }
@@ -1620,11 +1643,11 @@ function buildFoglioSquadriglie() {
           const ingrs = (piatto.ingredienti||[]).filter(i=>i.nome);
           if (ingrs.length) {
             const parti = ingrs.map(ingr => {
-              const isPerSq = ingr.perSq;
+              const mode = ingrMode(ingr);
               const dose = ingr.dose !== '' && ingr.dose !== undefined ? parseFloat(ingr.dose) : null;
               if (dose === null || isNaN(dose)) return ingr.nome;
-              // Per-sq: dose assoluta per squadriglia (×1). Altrimenti dose × persone della sq.
-              const tot = isPerSq ? dose : dose * persone;
+              // sq/tot: dose per squadriglia così com'è (×1). pers: dose × persone della sq.
+              const tot = (mode === 'sq' || mode === 'tot') ? dose : dose * persone;
               return `${ingr.nome} ${fmtQ(tot)}${ingr.um||''}`;
             });
             html += ` <span style="color:var(--slate-3)">— ${parti.join(', ')}</span>`;
@@ -1722,15 +1745,16 @@ function getIngr() {
               });
             }
             // Modalità di moltiplicazione:
-            //  - abs: quantità assoluta (×1, es. gara di cucina)
-            //  - perSq (reparto): dose × numero squadriglie
-            //  - default: dose × persone del pasto
+            //  - tot: quantità assoluta (×1, es. gara di cucina)
+            //  - sq (reparto): dose × numero squadriglie
+            //  - pers: dose × persone del pasto
+            const mode = ingrMode(ingr);
             let effMult;
-            if (ingr.abs) effMult = 1;
-            else if (ingr.perSq && SECTION === 'reparto') effMult = numSq();
+            if (mode === 'tot') effMult = 1;
+            else if (mode === 'sq' && SECTION === 'reparto') effMult = numSq();
             else effMult = mult;
-            // Con abs o ×sq gli intolleranti non si applicano
-            const effIntoll = (ingr.abs || (ingr.perSq && SECTION === 'reparto')) ? 0 : nIntoll;
+            // Con tot o sq gli intolleranti non si applicano
+            const effIntoll = (mode === 'tot' || (mode === 'sq' && SECTION === 'reparto')) ? 0 : nIntoll;
             addIngr(ingr.nome, ingr.dose, ingr.um, effMult,
                     ingr.alt?.nome, ingr.alt?.dose, ingr.alt?.um, effIntoll);
           });
@@ -2209,14 +2233,19 @@ function buildPreviewDosi() {
               <th style="padding:4px 8px;background:#e6f0ea;border-bottom:1px solid #c5dbc7;color:#1B4D2E">U.M.</th>
             </tr></thead><tbody>`;
           ingrs.filter(i=>i.nome).forEach(ingr => {
-            const isPerSq = ingr.perSq && SECTION === 'reparto';
-            const effMult = isPerSq ? numSq() : mult;
+            const mode = ingrMode(ingr);
+            const isPerSq = mode === 'sq' && SECTION === 'reparto';
+            const isTot = mode === 'tot';
+            const effMult = isTot ? 1 : (isPerSq ? numSq() : mult);
             const dose = ingr.dose !== '' && ingr.dose !== undefined ? parseFloat(ingr.dose) : null;
             const qtot = dose !== null && !isNaN(dose) ? fmtQ(dose * effMult) : '—';
             const doseLbl = dose !== null && !isNaN(dose) ? dose : '—';
-            const multLbl = isPerSq ? `×${numSq()} sq` : `×${effMult}`;
+            const multLbl = isTot ? 'totale' : (isPerSq ? `×${numSq()} sq` : `×${effMult}`);
+            const badge = isTot
+              ? ' <span style="font-size:9px;color:#1e40af;background:#e8f0fe;border:1px solid #b6d0f7;border-radius:8px;padding:0 5px">tot</span>'
+              : (isPerSq ? ' <span style="font-size:9px;color:#92620a;background:#fff3e0;border:1px solid #f5d87a;border-radius:8px;padding:0 5px">per sq</span>' : '');
             html += `<tr>
-              <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0">${ingr.nome}${isPerSq?' <span style="font-size:9px;color:#92620a;background:#fff3e0;border:1px solid #f5d87a;border-radius:8px;padding:0 5px">per sq</span>':''}</td>
+              <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0">${ingr.nome}${badge}</td>
               <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right">${doseLbl}</td>
               <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700">${qtot} <span style="font-size:8px;color:#aaa">${multLbl}</span></td>
               <td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;color:#888">${ingr.um||'—'}</td>
