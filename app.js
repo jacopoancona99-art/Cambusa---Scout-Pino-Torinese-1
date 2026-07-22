@@ -2895,6 +2895,86 @@ function saveOrario() {
 }
 
 // ═══════════════════════════════════════════════════
+// PANNELLO ADMIN — gestione campi
+// ═══════════════════════════════════════════════════
+function openAdmin() {
+  document.getElementById('admin-overlay').style.display = 'block';
+  document.getElementById('admin-popup').style.display = 'block';
+  loadAdminCampi();
+}
+function closeAdmin() {
+  document.getElementById('admin-overlay').style.display = 'none';
+  document.getElementById('admin-popup').style.display = 'none';
+}
+
+function loadAdminCampi() {
+  const list = document.getElementById('admin-campi-list');
+  if (!FB_READY || !fbDb) {
+    list.innerHTML = '<div style="font-size:12px;color:#c0392b">Firebase non disponibile. Riprova con connessione attiva.</div>';
+    return;
+  }
+  list.innerHTML = '<div style="font-size:12px;color:var(--slate-3)">Caricamento…</div>';
+  // Legge l'elenco di tutti i campi (richiede ".read": true su "campi")
+  fbDb.ref('campi').once('value').then(snap => {
+    const val = snap.val() || {};
+    const codici = Object.keys(val).sort();
+    if (!codici.length) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--slate-3)">Nessun campo presente.</div>';
+      return;
+    }
+    list.innerHTML = codici.map(code => {
+      const data = val[code] || {};
+      // info sintetiche: nome branco/reparto se presenti, peso dati
+      const nomeB = data.branco?.conf?.nome || '';
+      const nomeR = data.reparto?.conf?.nome || '';
+      const nomi = [nomeB, nomeR].filter(Boolean).join(' · ');
+      const kb = Math.max(1, Math.round(JSON.stringify(data).length / 1024));
+      const isCurrent = code === CAMPO_CODE;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:${isCurrent?'var(--green-50)':'var(--surface)'}">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;color:var(--slate)">${code}${isCurrent?' <span style="font-size:9px;color:var(--green-700);background:#fff;border:1px solid var(--green-600);border-radius:8px;padding:0 5px">attuale</span>':''}</div>
+          ${nomi?`<div style="font-size:11px;color:var(--slate-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nomi}</div>`:''}
+          <div style="font-size:10px;color:var(--slate-3)">~${kb} KB</div>
+        </div>
+        <button class="admin-del-btn" data-code="${code}" style="flex-shrink:0;font-size:11px;font-weight:600;padding:6px 10px;border-radius:6px;border:1px solid #f5c6c3;background:#fdecea;color:#c0392b;cursor:pointer">Elimina</button>
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('.admin-del-btn').forEach(btn => {
+      btn.addEventListener('click', function() { adminDeleteCampo(this.dataset.code); });
+    });
+  }).catch(err => {
+    list.innerHTML = `<div style="font-size:12px;color:#c0392b">Errore lettura: ${err.message}<br><span style="color:var(--slate-3)">Verifica che le regole Firebase permettano la lettura di "campi".</span></div>`;
+  });
+}
+
+function adminDeleteCampo(code) {
+  const risposta = prompt(`⚠ Eliminazione DEFINITIVA del campo "${code}".\nQuesto cancella i dati per tutti i dispositivi e non è reversibile.\n\nPer confermare, scrivi il codice del campo:`);
+  if (risposta === null) return;
+  if (risposta.trim() !== code) { showToast('Codice non corrispondente — eliminazione annullata'); return; }
+
+  fbDb.ref('campi/' + code).remove()
+    .then(() => {
+      // rimuovi anche i dati di presenza collegati
+      fbDb.ref('presenza/' + code).remove().catch(()=>{});
+      removeCampoRecente(code);
+      showToast(`Campo "${code}" eliminato`);
+      // se era il campo attivo, disconnetti
+      if (code === CAMPO_CODE) {
+        clearTimeout(_saveTimer);
+        stopListener();
+        CAMPO_CODE = '';
+        document.getElementById('campo-codice').value = '';
+        localStorage.removeItem('cambusa_last_code');
+        setSyncStatus('idle');
+      }
+      loadAdminCampi();
+      renderCampiRecenti();
+    })
+    .catch(err => showToast('Errore eliminazione: ' + err.message));
+}
+
+// ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
 document.querySelector('.tab-btn[data-tab="home"]').classList.add('active');
@@ -2936,6 +3016,23 @@ window.selectSection = function(sec) {
   origSelectSection(sec);
   localStorage.setItem('cambusa_last_section', sec);
 };
+
+// ── Accesso pannello admin: quadrupla pressione rapida sul logo ──
+(function setupAdminQuadTap() {
+  const logo = document.querySelector('.topbar-logo');
+  if (!logo) return;
+  let taps = 0, resetTimer = null;
+  const onTap = () => {
+    taps++;
+    clearTimeout(resetTimer);
+    if (taps >= 4) { taps = 0; openAdmin(); return; }
+    // azzera il conteggio se non completi i 4 tocchi entro 1.5s
+    resetTimer = setTimeout(() => { taps = 0; }, 1500);
+  };
+  logo.addEventListener('click', onTap);
+  logo.style.cursor = 'default';
+  logo.style.userSelect = 'none';
+})();
 
 // ═══════════════════════════════════════════════════
 // SERVICE WORKER REGISTRATION
