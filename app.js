@@ -3053,10 +3053,20 @@ if (savedCode) {
 
 // Ripristina sezione (i dati vengono caricati, ma la vista resta sulla Home)
 const savedSection = localStorage.getItem('cambusa_last_section');
+// Distingue riapertura (app chiusa e riaperta) da refresh (sessione ancora viva):
+//  - sessione nuova → vai sulla Home (orientamento)
+//  - refresh → ripristina l'ultimo tab dove stavi lavorando
+const sessioneViva = sessionStorage.getItem('cambusa_sessione_attiva');
+sessionStorage.setItem('cambusa_sessione_attiva', '1');
+const vaiAllaVista = () => {
+  if (sessioneViva) restoreLastTab();  // refresh: torna dov'eri
+  else goTab('home');                  // riapertura: parti dalla Home
+};
+
 if (savedSection === 'branco' || savedSection === 'reparto') {
-  setTimeout(() => { selectSection(savedSection); initNote(); goTab('home'); }, 300);
+  setTimeout(() => { selectSection(savedSection); initNote(); vaiAllaVista(); }, 300);
 } else {
-  setTimeout(() => { initNote(); goTab('home'); }, 300);
+  setTimeout(() => { initNote(); vaiAllaVista(); }, 300);
 }
 
 // Salva sezione corrente
