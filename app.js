@@ -261,6 +261,7 @@ function render() {
   updatePreviews();
   renderScontrini();   // scontrini sono campo-level: aggiornali sempre
   buildSquadriglie();  // squadriglie (solo reparto, ma safe anche altrove)
+  renderPercorso();    // aggiorna il percorso guidato sulla Home
   loadNote();
   // Il tab Squadriglie è visibile solo nel reparto
   const tabSq = document.getElementById('tab-squadriglie');
@@ -390,10 +391,9 @@ function connectCampo() {
     }
 
     // render() è sempre sicuro: preserva i campi in cui si sta scrivendo.
-    // Nessun flag necessario.
+    // Non cambia mai il tab attivo: la navigazione resta all'utente.
     if (SECTION) {
       render();
-      restoreLastTab();
     } else {
       const hasData = (DATA.branco?.conf?.giorni > 0) || (DATA.reparto?.conf?.giorni > 0);
       if (hasData) showToast('Campo caricato ✓ — seleziona Branco o Reparto per vedere i dati');
@@ -518,9 +518,39 @@ function selectSection(sec) {
   const conf = C();
   detail.innerHTML = `<strong>${sec === 'branco' ? 'Branco' : 'Reparto'}</strong> — ${conf.nome || 'Nome non impostato'} — ${totP()} persone, ${conf.giorni} giorni.
     <br><span style="color:var(--slate-3);font-size:11px;margin-top:4px;display:block">Configura in "Configurazione" e compila il menu.</span>`;
+  renderPercorso();
   // Cambio sezione = dati diversi: ricostruzione pulita del menu
   document.getElementById('giorni-container').innerHTML = '';
   render();
+}
+
+// Percorso guidato sulla Home: 1. Configura → 2. Menu → 3. Spesa
+function renderPercorso() {
+  const box = document.getElementById('home-percorso');
+  const steps = document.getElementById('home-percorso-steps');
+  if (!box || !steps) return;
+  if (!SECTION) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+
+  // Stato di completamento
+  const configFatta = (C().giorni || 0) > 0 && !!C().dataInizio;
+  const menu = S().menu || {};
+  const menuFatto = Object.values(menu).some(g => Object.values(g).some(arr => Array.isArray(arr) && arr.some(p => p.nome || (p.ingredienti||[]).length)));
+
+  const step = (num, tab, titolo, desc, fatto, attivo) => `
+    <button onclick="goTab('${tab}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px;border:1.5px solid ${attivo?'var(--green-600)':'var(--border)'};border-radius:var(--radius-sm);background:${attivo?'var(--green-50)':'var(--surface)'};cursor:pointer;font-family:inherit">
+      <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:${fatto?'var(--green-700)':(attivo?'var(--green-600)':'var(--slate-4)')};color:#fff">${fatto?'✓':num}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;color:var(--slate)">${titolo}</div>
+        <div style="font-size:11px;color:var(--slate-3)">${desc}</div>
+      </div>
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--slate-3);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>`;
+
+  steps.innerHTML =
+    step(1, 'conf', 'Configura il campo', configFatta ? 'Date, presenze, budget impostati' : 'Inserisci date, presenze e budget', configFatta, !configFatta) +
+    step(2, 'menu', 'Componi il menu', menuFatto ? 'Menu avviato' : 'Aggiungi piatti o carica un menù pronto', menuFatto, configFatta && !menuFatto) +
+    step(3, 'spesa', 'Lista spesa e budget', 'Generati automaticamente dal menu', false, configFatta && menuFatto);
 }
 
 // ═══════════════════════════════════════════════════
@@ -840,6 +870,25 @@ function buildMenu() {
   const menu = S().menu;
   const ALL_PASTI = ['colazione','merenda-mattina','pranzo','merenda','cena','conforto'];
   const giorni = C().giorni || 0;
+
+  // Configurazione non ancora fatta: guida l'utente invece di mostrare il vuoto
+  if (giorni === 0 || !C().dataInizio) {
+    c.innerHTML = `<div class="card" style="text-align:center;padding:28px 20px">
+      <div style="font-size:32px;margin-bottom:8px">🧭</div>
+      <div style="font-weight:600;font-size:15px;color:var(--slate);margin-bottom:6px">Prima configura il campo</div>
+      <div style="font-size:12px;color:var(--slate-3);margin-bottom:16px;line-height:1.5">Per comporre il menu servono le date e le presenze.<br>Bastano un paio di minuti.</div>
+      <button class="btn btn-primary btn-sm" onclick="goTab('conf')" style="margin:0 auto">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Vai alla configurazione
+      </button>
+    </div>`;
+    return;
+  }
+
+  // Se era mostrata la card guida (config non fatta), puliscila
+  if (c.firstElementChild && !c.firstElementChild.classList.contains('giorno-card')) {
+    c.innerHTML = '';
+  }
 
   // Rimuovi giorni in eccesso
   while (c.children.length > giorni) c.removeChild(c.lastChild);
@@ -3002,12 +3051,12 @@ if (savedCode) {
   setSyncStatus('idle');
 }
 
-// Ripristina sezione
+// Ripristina sezione (i dati vengono caricati, ma la vista resta sulla Home)
 const savedSection = localStorage.getItem('cambusa_last_section');
 if (savedSection === 'branco' || savedSection === 'reparto') {
-  setTimeout(() => { selectSection(savedSection); initNote(); restoreLastTab(); }, 300);
+  setTimeout(() => { selectSection(savedSection); initNote(); goTab('home'); }, 300);
 } else {
-  setTimeout(() => { initNote(); restoreLastTab(); }, 300);
+  setTimeout(() => { initNote(); goTab('home'); }, 300);
 }
 
 // Salva sezione corrente
