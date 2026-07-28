@@ -539,6 +539,10 @@ table.data-tbl tr:hover td { background: var(--green-50); }
   .page:not(.print-target) { display: none !important; }
   .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
   .giorno-body { display: block !important; }
+  /* Stampa di una singola vista (accordion Dosi & Stampe) */
+  body.print-single .page { display: none !important; }
+  body.print-single #print-solo { display: block !important; }
+  body.print-single #print-solo * { visibility: visible; }
 }
 
 /* ── HELP TOOLTIP ──────────────────────────────────── */
@@ -764,3 +768,17 @@ table.summary-tbl tr:hover td { background: var(--green-50); }
 .giorno-override input.override-active {
   background: #fff3e0; border-color: #c8773a; color: #92620a;
 }
+/* Accordion Dosi & Stampe */
+.acc-section { margin-bottom: 8px; }
+.acc-head {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 14px 16px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-family: inherit;
+  font-size: 14px; font-weight: 600; color: var(--slate);
+}
+.acc-head span { display: flex; align-items: center; gap: 8px; }
+.acc-head svg { width: 18px; height: 18px; stroke: var(--green-700); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.acc-head .acc-chevron { stroke: var(--slate-3); transition: transform .2s; }
+.acc-head.open .acc-chevron { transform: rotate(180deg); }
+.acc-body { padding: 12px 4px 4px; }

@@ -50,10 +50,6 @@
       <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       Menu
     </button>
-    <button class="tab-btn" data-tab="squadriglie" id="tab-squadriglie" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-      Squadriglie
-    </button>
     <button class="tab-btn" data-tab="spesa">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.97 1.61h9.72a2 2 0 001.97-1.61L23 6H6"/></svg>
       Lista spesa
@@ -62,13 +58,9 @@
       <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
       Budget
     </button>
-    <button class="tab-btn" data-tab="stampa-menu">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Menu settimanale
-    </button>
-    <button class="tab-btn" data-tab="stampa-dosi">
+    <button class="tab-btn" data-tab="dosi">
       <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      Foglio dosi
+      Dosi e Riepilogo
     </button>
     <button class="tab-btn" data-tab="scontrini">
       <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
@@ -302,6 +294,25 @@
       </div>
     </div>
 
+    <!-- Squadriglie (opzionale, solo reparto) -->
+    <div class="card acc-section" id="conf-sq-card" style="display:none;padding:0">
+      <button class="acc-head" onclick="toggleAcc('conf-sq-body')" style="border:none;border-radius:var(--radius)">
+        <span><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Squadriglie (opzionale)</span>
+        <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <div class="acc-body" id="conf-sq-body" style="display:none">
+      <div style="font-size:12px;color:var(--slate-3);margin-bottom:12px">
+        Definisci le squadriglie con nome e numero di componenti. Servono per il foglio dosi diviso per squadriglia (lo trovi in "Dosi e Riepilogo").
+      </div>
+      <div id="squadriglie-list"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addSquadriglia()" style="margin-top:10px">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Aggiungi squadriglia
+      </button>
+      <div id="squadriglie-riepilogo" style="margin-top:14px"></div>
+    </div>
+
     <div style="display:flex;justify-content:flex-end">
       <button class="btn btn-primary" onclick="applyConf()">
         <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
@@ -362,54 +373,6 @@
     <div style="font-size:12px;color:var(--slate-3);margin-bottom:14px">Tutti i codici campo salvati. Usa con attenzione: l'eliminazione è definitiva e cancella i dati per tutti.</div>
     <div id="admin-list"><div style="font-size:12px;color:var(--slate-3)">Caricamento…</div></div>
     <button class="btn btn-secondary btn-sm" onclick="closeAdmin()" style="margin-top:12px;width:100%">Chiudi</button>
-  </div>
-
-  <!-- ───── SQUADRIGLIE ───── -->
-  <div class="page" id="page-squadriglie">
-    <div class="card">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-        Squadriglie
-        <button class="help-btn" onclick="toggleHelp('help-squadriglie')">?</button>
-      </div>
-      <div class="help-panel" id="help-squadriglie">
-        <strong>Squadriglie</strong> — pianifica le dosi divise per squadriglia (solo reparto).<ul>
-        <li>Aggiungi ogni squadriglia con <strong>nome</strong> e <strong>numero di componenti</strong>.</li>
-        <li>Il menù resta uno solo per tutti: qui definisci solo <em>quante persone</em> cucina ogni squadriglia.</li>
-        <li>Nelle prossime tappe potrai distribuire la staff sui pasti e ottenere il foglio dosi per squadriglia.</li></ul>
-      </div>
-      <div id="squadriglie-list"></div>
-      <button class="btn btn-secondary btn-sm" onclick="addSquadriglia()" style="margin-top:10px">
-        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Aggiungi squadriglia
-      </button>
-      <div id="squadriglie-riepilogo" style="margin-top:14px"></div>
-    </div>
-
-    <!-- A2: distribuzione staff per pasto -->
-    <div class="card" id="sq-staff-card" style="display:none">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-        Distribuzione staff per pasto
-      </div>
-      <div style="font-size:11px;color:var(--slate-3);margin-bottom:12px">
-        Per ogni pasto scegli come si comporta la staff (capi + cambusieri + staff = <strong id="sq-staff-tot">0</strong> persone). Le merende non compaiono: restano nel foglio dosi generale.
-      </div>
-      <div id="sq-staff-list"></div>
-    </div>
-
-    <!-- A3: foglio dosi per squadriglia -->
-    <div class="card" id="sq-dosi-card" style="display:none">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Foglio dosi per squadriglia
-        <button class="btn btn-secondary btn-sm no-print" style="margin-left:auto" onclick="stampaSquadriglie()">
-          <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Stampa
-        </button>
-      </div>
-      <div id="sq-dosi-content"></div>
-    </div>
   </div>
 
   <!-- ───── SPESA ───── -->
@@ -482,58 +445,75 @@
   </div>
 
   <!-- ───── STAMPA MENU ───── -->
-  <div class="page" id="page-stampa-menu">
+  <!-- ───── DOSI & STAMPE ───── -->
+  <div class="page" id="page-dosi">
     <div class="card no-print">
-      <div class="card-title" style="justify-content:space-between">
-        <span style="display:flex;align-items:center;gap:8px">
-          <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Menu settimanale — stampa
-        </span>
-        <button class="help-btn" onclick="toggleHelp('help-stampa-menu')">?</button>
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Dosi e Riepilogo
+        <button class="help-btn" onclick="toggleHelp('help-dosi-stampe')">?</button>
       </div>
-      <div class="help-panel" id="help-stampa-menu">
-        <strong>Menu settimanale</strong> — tavola da portare in campo.<ul>
-        <li>Mostra tutti i giorni in riga e i pasti in colonna, con solo i <strong>nomi dei piatti</strong> (senza ingredienti).</li>
-        <li>Gli <strong>orari</strong> impostati appaiono nell'intestazione di ogni colonna pasto; gli orari personalizzati per singolo giorno appaiono nella cella con ✏.</li>
-        <li>Il simbolo <strong>⚠</strong> accanto a un piatto indica la presenza di un allergene attivo.</li>
-        <li>Usa <strong>Stampa / Salva PDF</strong> per salvarlo sul telefono o stamparlo prima di partire.</li></ul>
+      <div class="help-panel" id="help-dosi-stampe">
+        <strong>Dosi &amp; Stampe</strong> — tutte le viste da portare in campo, in un posto solo.<ul>
+        <li><strong>Menu settimanale</strong>: la tabella con i piatti di ogni giorno, da appendere in cambusa.</li>
+        <li><strong>Foglio dosi</strong>: ingredienti e quantità totali per ogni pasto.</li>
+        <li><strong>Dosi per squadriglia</strong>: le quantità divise per ogni squadriglia (solo reparto).</li>
+        <li>Ogni sezione si apre col titolo e ha il suo pulsante di stampa.</li></ul>
       </div>
-      <p style="font-size:12px;color:var(--slate-3);margin-bottom:12px">Riepilogo completo del menu, con alert allergeni. Portalo in campo.</p>
-      <button class="btn btn-primary btn-sm" onclick="window.print(); document.querySelectorAll('.page').forEach(p=>{p.classList.remove('print-target')}); document.getElementById('page-stampa-menu').classList.add('print-target')">
-        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Stampa / Salva PDF
-      </button>
+      <p style="font-size:12px;color:var(--slate-3)">Apri una sezione per vedere l'anteprima e stamparla.</p>
     </div>
-    <div class="print-preview" id="preview-menu">
-      <div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Compila il menu per vedere l'anteprima</div>
-    </div>
-  </div>
 
-  <!-- ───── STAMPA DOSI ───── -->
-  <div class="page" id="page-stampa-dosi">
-    <div class="card no-print">
-      <div class="card-title" style="justify-content:space-between">
-        <span style="display:flex;align-items:center;gap:8px">
-          <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          Foglio dosi — stampa
-        </span>
-        <button class="help-btn" onclick="toggleHelp('help-dosi')">?</button>
-      </div>
-      <div class="help-panel" id="help-dosi">
-        <strong>Foglio dosi</strong> — da portare in cambusa durante il campo.<ul>
-        <li>Mostra ogni piatto con i relativi ingredienti, la <strong>dose per persona</strong> e il <strong>totale calcolato</strong> per il numero di presenze di quel pasto.</li>
-        <li>Il totale rispetta la gerarchia degli override: <em>override pasto → override giorno → totale generale</em>.</li>
-        <li>Se è presente un ingrediente alternativo per intolleranti, appare la riga alternativa con la quantità per gli intolleranti.</li>
-        <li>Usa <strong>Stampa / Salva PDF</strong> per ottenere un foglio fisico o un file da condividere.</li></ul>
-      </div>
-      <p style="font-size:12px;color:var(--slate-3);margin-bottom:12px">Quantità per ogni ingrediente, dose per persona e totale. Da usare in cambusa.</p>
-      <button class="btn btn-primary btn-sm" onclick="window.print(); document.querySelectorAll('.page').forEach(p=>{p.classList.remove('print-target')}); document.getElementById('page-stampa-dosi').classList.add('print-target')">
-        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Stampa / Salva PDF
+    <!-- Accordion: Menu settimanale -->
+    <div class="acc-section no-print">
+      <button class="acc-head" onclick="toggleAcc('acc-menu-sett')">
+        <span><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Menu settimanale</span>
+        <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
     </div>
-    <div class="print-preview" id="preview-dosi">
-      <div class="empty-state"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Compila il menu per vedere l'anteprima</div>
+    <div class="acc-body" id="acc-menu-sett" style="display:none">
+      <button class="btn btn-primary btn-sm no-print" onclick="stampaVista('preview-menu')" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Stampa menu settimanale
+      </button>
+      <div class="print-preview" id="preview-menu">
+        <div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Compila il menu per vedere l'anteprima</div>
+      </div>
+    </div>
+
+    <!-- Accordion: Foglio dosi -->
+    <div class="acc-section no-print">
+      <button class="acc-head" onclick="toggleAcc('acc-foglio-dosi')">
+        <span><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Foglio dosi</span>
+        <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <div class="acc-body" id="acc-foglio-dosi" style="display:none">
+      <button class="btn btn-primary btn-sm no-print" onclick="stampaVista('preview-dosi')" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Stampa foglio dosi
+      </button>
+      <div class="print-preview" id="preview-dosi">
+        <div class="empty-state"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Compila il menu per vedere l'anteprima</div>
+      </div>
+    </div>
+
+    <!-- Accordion: Dosi per squadriglia (solo reparto) -->
+    <div class="acc-section no-print" id="acc-sq-wrap" style="display:none">
+      <button class="acc-head" onclick="toggleAcc('acc-dosi-sq')">
+        <span><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Dosi per squadriglia</span>
+        <svg class="acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <div class="acc-body" id="acc-dosi-sq" style="display:none">
+      <!-- Distribuzione staff per pasto -->
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;font-size:13px;color:var(--slate);margin-bottom:6px">Distribuzione staff per pasto</div>
+        <div style="font-size:11px;color:var(--slate-3);margin-bottom:10px">
+          Per ogni pasto scegli come si comporta la staff (capi + cambusieri + staff = <strong id="sq-staff-tot">0</strong> persone). Le merende non compaiono: restano nel foglio dosi generale.
+        </div>
+        <div id="sq-staff-list"></div>
+      </div>
+      <div id="dosi-sq-mount"></div>
     </div>
   </div>
 

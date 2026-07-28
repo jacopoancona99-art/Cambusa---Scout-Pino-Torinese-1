@@ -260,12 +260,9 @@ function render() {
   updateBudget();
   updatePreviews();
   renderScontrini();   // scontrini sono campo-level: aggiornali sempre
-  buildSquadriglie();  // squadriglie (solo reparto, ma safe anche altrove)
+  buildSquadriglie();  // anagrafica squadriglie (in Configurazione, solo reparto)
   renderPercorso();    // aggiorna il percorso guidato sulla Home
   loadNote();
-  // Il tab Squadriglie è visibile solo nel reparto
-  const tabSq = document.getElementById('tab-squadriglie');
-  if (tabSq) tabSq.style.display = (SECTION === 'reparto') ? '' : 'none';
   document.querySelectorAll('#market-chips .mchip').forEach(chip => {
     chip.classList.toggle('active', S().activeMarkets.includes(chip.dataset.market));
   });
@@ -464,18 +461,22 @@ function goTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + tab));
   if (tab === 'scontrini') renderScontrini();
-  if (tab === 'squadriglie') buildSquadriglie();
   if (tab === 'note') loadNote();
   // Quando si torna al menu, applica eventuali aggiornamenti Firebase in sospeso
   if (tab === 'menu' && SECTION) { buildMenu(); updateStats(); }
+  // Tab Dosi & Stampe: aggiorna anteprime e monta il foglio squadriglie
+  if (tab === 'dosi' && SECTION) {
+    updatePreviews();
+    const sqWrap = document.getElementById('acc-sq-wrap');
+    if (sqWrap) sqWrap.style.display = (SECTION === 'reparto' && getSquadriglie().length) ? '' : 'none';
+    mountDosiSquadriglie();
+  }
   localStorage.setItem('cambusa_last_tab', tab);
 }
 
 function restoreLastTab() {
   const tab = localStorage.getItem('cambusa_last_tab');
-  const valid = ['home','conf','menu','squadriglie','spesa','budget','stampa-menu','stampa-dosi','scontrini','note'];
-  // squadriglie solo nel reparto
-  if (tab === 'squadriglie' && SECTION !== 'reparto') return;
+  const valid = ['home','conf','menu','spesa','budget','dosi','scontrini','note'];
   if (tab && valid.includes(tab)) goTab(tab);
 }
 
@@ -756,6 +757,10 @@ function loadConfIntoForm() {
   const sqInput = document.getElementById('cf-squadriglie');
   if (sqWrap) sqWrap.style.display = (SECTION === 'reparto') ? '' : 'none';
   if (sqInput) sqInput.value = conf.numSquadriglie || 0;
+  // Card squadriglie in configurazione: solo reparto
+  const confSqCard = document.getElementById('conf-sq-card');
+  if (confSqCard) confSqCard.style.display = (SECTION === 'reparto') ? '' : 'none';
+  if (SECTION === 'reparto') buildSquadriglie();
   document.querySelectorAll('#pasti-chips .chip').forEach(chip => {
     const val = conf.pastiAttivi[chip.dataset.pasto];
     chip.classList.toggle('active', val !== false);
@@ -1540,18 +1545,15 @@ function distribuzioneAutoStaff(totStaff) {
 }
 
 function buildStaffDistribuzione() {
-  const card = document.getElementById('sq-staff-card');
   const list = document.getElementById('sq-staff-list');
   const totLbl = document.getElementById('sq-staff-tot');
-  if (!card || !list) return;
+  if (!list) return;
 
   const sq = getSquadriglie();
   const totStaff = totConf();
   if (totLbl) totLbl.textContent = totStaff;
 
-  // Mostra la card solo se ci sono squadriglie
-  card.style.display = sq.length ? '' : 'none';
-  if (!sq.length) { list.innerHTML = ''; return; }
+  if (!sq.length) { list.innerHTML = '<div style="font-size:11px;color:var(--slate-3)">Definisci le squadriglie in Configurazione.</div>'; return; }
 
   const sqPasti = getSqPasti();
   const pastiAttivi = PASTI_PRINCIPALI.filter(p => C().pastiAttivi?.[p] !== false);
@@ -1650,14 +1652,34 @@ function personePerSqPasto(sqObj, pasto) {
 // ═══════════════════════════════════════════════════
 // A3 — FOGLIO DOSI PER SQUADRIGLIA
 // ═══════════════════════════════════════════════════
+function mountDosiSquadriglie() {
+  const mount = document.getElementById('dosi-sq-mount');
+  if (!mount) return;
+  if (SECTION !== 'reparto' || !getSquadriglie().length) {
+    mount.innerHTML = '<div style="font-size:12px;color:var(--slate-3);padding:10px">Nessuna squadriglia definita. Aggiungile in Configurazione.</div>';
+    const staffList = document.getElementById('sq-staff-list');
+    if (staffList) staffList.innerHTML = '';
+    return;
+  }
+  buildStaffDistribuzione();
+  mount.innerHTML = `
+    <button class="btn btn-primary btn-sm no-print" onclick="stampaSquadriglie()" style="margin-bottom:10px">
+      <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Stampa dosi per squadriglia
+    </button>
+    <div id="sq-dosi-content-mount"></div>`;
+  buildFoglioSquadriglie();
+}
+
 function buildFoglioSquadriglie() {
   const card = document.getElementById('sq-dosi-card');
-  const cont = document.getElementById('sq-dosi-content');
-  if (!card || !cont) return;
-
   const sq = getSquadriglie();
-  card.style.display = sq.length ? '' : 'none';
-  if (!sq.length) { cont.innerHTML = ''; return; }
+  if (card) card.style.display = sq.length ? '' : 'none';
+  // Genera l'HTML una volta, poi scrivilo in tutti i contenitori presenti
+  const targets = ['sq-dosi-content','sq-dosi-content-mount']
+    .map(id => document.getElementById(id)).filter(Boolean);
+  if (!targets.length) return;
+  if (!sq.length) { targets.forEach(t => t.innerHTML = ''); return; }
 
   const pastiAttivi = PASTI_PRINCIPALI.filter(p => C().pastiAttivi?.[p] !== false);
   const menu = S().menu || {};
@@ -1712,11 +1734,11 @@ function buildFoglioSquadriglie() {
     html += `</div>`;
   });
 
-  cont.innerHTML = html;
+  targets.forEach(t => t.innerHTML = html);
 }
 
 function stampaSquadriglie() {
-  const cont = document.getElementById('sq-dosi-content');
+  const cont = document.getElementById('sq-dosi-content-mount') || document.getElementById('sq-dosi-content');
   if (!cont || !cont.innerHTML.trim()) { showToast('Niente da stampare'); return; }
   const w = window.open('', '_blank');
   w.document.write(`<html><head><title>Foglio dosi squadriglie — ${C().nome||'Campo'}</title>
@@ -2142,6 +2164,34 @@ document.querySelectorAll('#market-chips .mchip').forEach(chip => {
 // ANTEPRIME STAMPA
 // ═══════════════════════════════════════════════════
 function updatePreviews() { buildPreviewMenu(); buildPreviewDosi(); }
+
+// Accordion Dosi & Stampe: apri/chiudi una sezione
+function toggleAcc(id) {
+  const body = document.getElementById(id);
+  if (!body) return;
+  const head = body.previousElementSibling?.querySelector('.acc-head');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (head) head.classList.toggle('open', !open);
+}
+
+// Stampa una singola vista (preview) tra quelle dell'accordion
+function stampaVista(previewId) {
+  const el = document.getElementById(previewId);
+  if (!el || el.querySelector('.empty-state')) { showToast('Compila prima il menu'); return; }
+  // Clona la preview in un contenitore dedicato alla stampa
+  let holder = document.getElementById('print-solo');
+  if (!holder) {
+    holder = document.createElement('div');
+    holder.id = 'print-solo';
+    holder.style.display = 'none';
+    document.body.appendChild(holder);
+  }
+  holder.innerHTML = el.innerHTML;
+  document.body.classList.add('print-single');
+  window.print();
+  setTimeout(() => { document.body.classList.remove('print-single'); holder.innerHTML = ''; }, 300);
+}
 
 function buildPreviewMenu() {
   const el = document.getElementById('preview-menu');
