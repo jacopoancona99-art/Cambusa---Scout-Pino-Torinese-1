@@ -78,6 +78,7 @@ const PB = {
   'finocchi':{q:.12,u:'kg',p:2.2},'sedano':{q:.05,u:'kg',p:2.0},'funghi':{q:.1,u:'kg',p:5.0},
   'funghi champignon':{q:.1,u:'kg',p:4.5},'piselli':{q:.08,u:'kg',p:2.5},'fagiolini':{q:.12,u:'kg',p:3.5},
   'mais':{q:.08,u:'kg',p:3.0},'zucca':{q:.15,u:'kg',p:2.0},'radicchio':{q:.06,u:'kg',p:3.5},
+  'minestrone':{q:.25,u:'kg',p:3.0},'minestra':{q:.25,u:'kg',p:3.0},'rosmarino':{q:.002,u:'kg',p:15.0},'salvia':{q:.002,u:'kg',p:15.0},
   'pomodori secchi':{q:.02,u:'kg',p:12.0},'olive':{q:.03,u:'kg',p:6.0},'basilico':{q:.005,u:'kg',p:20.0},
   'prezzemolo':{q:.005,u:'kg',p:15.0},'peperoncino':{q:.002,u:'kg',p:15.0},
 

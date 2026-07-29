@@ -226,4 +226,244 @@ const MENU_PRONTI = [
       },
     },
   },
+  {
+    id: 'weekend-mare',
+    nome: 'Weekend al mare',
+    giorni: 4,
+    descrizione: 'Appartamento con cucina — 4 giorni, pasti semplici',
+    pastoInizio: 'cena',      // arrivo venerdì sera
+    pastoFine: 'pranzo',      // partenza lunedì dopo pranzo
+    menu: {
+      // Giorno 1 — Venerdì (solo cena)
+      1: {
+        cena: [{ nome: 'Pasta al pomodoro', ingredienti: [
+          { nome: 'pasta', dose: 100, um: 'g' },
+          { nome: 'passata di pomodoro', dose: 120, um: 'g' },
+          { nome: 'parmigiano', dose: 15, um: 'g' },
+          { nome: 'olio', dose: 5, um: 'ml' },
+        ]}],
+      },
+      // Giorno 2 — Sabato
+      2: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 40, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Insalata di riso', ingredienti: [
+          { nome: 'riso', dose: 90, um: 'g' },
+          { nome: 'tonno', dose: 50, um: 'g' },
+          { nome: 'mais', dose: 40, um: 'g' },
+          { nome: 'pomodori', dose: 80, um: 'g' },
+          { nome: 'mozzarella', dose: 50, um: 'g' },
+          { nome: 'olive', dose: 20, um: 'g' },
+        ]}],
+        merenda: [{ nome: 'Frutta', ingredienti: [
+          { nome: 'pesche', dose: 150, um: 'g' },
+        ]}],
+        cena: [{ nome: 'Pollo e insalata', ingredienti: [
+          { nome: 'petto di pollo', dose: 180, um: 'g' },
+          { nome: 'insalata', dose: 80, um: 'g' },
+          { nome: 'pomodori', dose: 100, um: 'g' },
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'olio', dose: 8, um: 'ml' },
+        ]}],
+      },
+      // Giorno 3 — Domenica
+      3: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 40, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Caprese e pane', ingredienti: [
+          { nome: 'mozzarella', dose: 100, um: 'g' },
+          { nome: 'pomodori', dose: 150, um: 'g' },
+          { nome: 'pane', dose: 80, um: 'g' },
+          { nome: 'olio', dose: 8, um: 'ml' },
+          { nome: 'basilico', dose: 2, um: 'g' },
+        ]}],
+        merenda: [{ nome: 'Anguria', ingredienti: [
+          { nome: 'anguria', dose: 300, um: 'g' },
+        ]}],
+        cena: [{ nome: 'Pasta e zucchine', ingredienti: [
+          { nome: 'pasta', dose: 100, um: 'g' },
+          { nome: 'zucchine', dose: 120, um: 'g' },
+          { nome: 'parmigiano', dose: 15, um: 'g' },
+          { nome: 'olio', dose: 8, um: 'ml' },
+          { nome: 'cipolla', dose: 20, um: 'g' },
+        ]}],
+      },
+      // Giorno 4 — Lunedì (solo pranzo, poi partenza)
+      4: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 40, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Pasta fredda', ingredienti: [
+          { nome: 'pasta', dose: 100, um: 'g' },
+          { nome: 'pomodorini', dose: 80, um: 'g' },
+          { nome: 'mozzarella', dose: 50, um: 'g' },
+          { nome: 'olive', dose: 20, um: 'g' },
+          { nome: 'olio', dose: 8, um: 'ml' },
+        ]}],
+      },
+    },
+  },
+  {
+    id: 'settimana-montagna',
+    nome: 'Settimana in montagna',
+    giorni: 7,
+    descrizione: 'Casa in montagna con cucina — 7 giorni, piatti caldi e semplici',
+    pastoInizio: 'cena',      // arrivo primo giorno a cena
+    pastoFine: 'pranzo',      // partenza ultimo giorno dopo pranzo
+    menu: {
+      // Giorno 1 — arrivo, solo cena
+      1: {
+        cena: [{ nome: 'Pasta al ragù', ingredienti: [
+          { nome: 'pasta', dose: 100, um: 'g' },
+          { nome: 'carne macinata', dose: 80, um: 'g' },
+          { nome: 'passata di pomodoro', dose: 120, um: 'g' },
+          { nome: 'cipolla', dose: 20, um: 'g' },
+          { nome: 'carote', dose: 30, um: 'g' },
+          { nome: 'parmigiano', dose: 15, um: 'g' },
+        ]}],
+      },
+      // Giorno 2
+      2: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 50, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Minestrone e formaggio', ingredienti: [
+          { nome: 'minestrone', dose: 250, um: 'g' },
+          { nome: 'patate', dose: 80, um: 'g' },
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'formaggio', dose: 60, um: 'g' },
+        ]}],
+        cena: [{ nome: 'Polenta e spezzatino', ingredienti: [
+          { nome: 'polenta', dose: 100, um: 'g' },
+          { nome: 'spezzatino', dose: 150, um: 'g' },
+          { nome: 'cipolla', dose: 20, um: 'g' },
+          { nome: 'carote', dose: 40, um: 'g' },
+          { nome: 'passata di pomodoro', dose: 60, um: 'g' },
+        ]}],
+      },
+      // Giorno 3
+      3: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 50, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Pasta al pomodoro', ingredienti: [
+          { nome: 'pasta', dose: 100, um: 'g' },
+          { nome: 'passata di pomodoro', dose: 120, um: 'g' },
+          { nome: 'parmigiano', dose: 15, um: 'g' },
+          { nome: 'olio', dose: 5, um: 'ml' },
+        ]}],
+        cena: [{ nome: 'Zuppa di legumi e crostini', ingredienti: [
+          { nome: 'lenticchie', dose: 70, um: 'g' },
+          { nome: 'patate', dose: 80, um: 'g' },
+          { nome: 'carote', dose: 40, um: 'g' },
+          { nome: 'cipolla', dose: 20, um: 'g' },
+          { nome: 'pane', dose: 60, um: 'g' },
+        ]}],
+      },
+      // Giorno 4
+      4: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 50, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Risotto allo zafferano', ingredienti: [
+          { nome: 'riso', dose: 90, um: 'g' },
+          { nome: 'zafferano', dose: 0.1, um: 'g' },
+          { nome: 'cipolla', dose: 20, um: 'g' },
+          { nome: 'parmigiano', dose: 20, um: 'g' },
+          { nome: 'burro', dose: 10, um: 'g' },
+        ]}],
+        cena: [{ nome: 'Pollo arrosto e patate', ingredienti: [
+          { nome: 'pollo', dose: 220, um: 'g' },
+          { nome: 'patate', dose: 200, um: 'g' },
+          { nome: 'rosmarino', dose: 1, um: 'g' },
+          { nome: 'olio', dose: 10, um: 'ml' },
+        ]}],
+      },
+      // Giorno 5
+      5: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 50, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Pasta e fagioli', ingredienti: [
+          { nome: 'pasta', dose: 70, um: 'g' },
+          { nome: 'fagioli', dose: 80, um: 'g' },
+          { nome: 'passata di pomodoro', dose: 50, um: 'g' },
+          { nome: 'cipolla', dose: 15, um: 'g' },
+        ]}],
+        cena: [{ nome: 'Uova, formaggio e verdure', ingredienti: [
+          { nome: 'uova', dose: 2, um: 'pz' },
+          { nome: 'formaggio', dose: 60, um: 'g' },
+          { nome: 'zucchine', dose: 100, um: 'g' },
+          { nome: 'pane', dose: 60, um: 'g' },
+        ]}],
+      },
+      // Giorno 6
+      6: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 50, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Pasta al pesto', ingredienti: [
+          { nome: 'pasta', dose: 100, um: 'g' },
+          { nome: 'pesto', dose: 30, um: 'g' },
+          { nome: 'parmigiano', dose: 15, um: 'g' },
+        ]}],
+        cena: [{ nome: 'Polenta e formaggio fuso', ingredienti: [
+          { nome: 'polenta', dose: 100, um: 'g' },
+          { nome: 'formaggio', dose: 80, um: 'g' },
+          { nome: 'latte', dose: 30, um: 'ml' },
+          { nome: 'burro', dose: 10, um: 'g' },
+        ]}],
+      },
+      // Giorno 7 — partenza, solo pranzo
+      7: {
+        colazione: [{ nome: 'Colazione', ingredienti: [
+          { nome: 'pane', dose: 60, um: 'g' },
+          { nome: 'marmellata', dose: 40, um: 'g' },
+          { nome: 'latte', dose: 200, um: 'ml' },
+          { nome: 'caffè', dose: 8, um: 'g' },
+          { nome: 'biscotti', dose: 50, um: 'g' },
+        ]}],
+        pranzo: [{ nome: 'Pasta in bianco e prosciutto', ingredienti: [
+          { nome: 'pasta', dose: 100, um: 'g' },
+          { nome: 'burro', dose: 10, um: 'g' },
+          { nome: 'parmigiano', dose: 20, um: 'g' },
+          { nome: 'prosciutto cotto', dose: 60, um: 'g' },
+        ]}],
+      },
+    },
+  },
 ];
