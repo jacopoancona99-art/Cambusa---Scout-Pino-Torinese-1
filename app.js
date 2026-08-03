@@ -898,8 +898,8 @@ function processaImport(righe) {
     pastiUsati.add(pasto);
     if (!menu[giorno]) menu[giorno] = {};
     if (!menu[giorno][pasto]) menu[giorno][pasto] = [];
-    // trova o crea il piatto
-    let p = menu[giorno][pasto].find(x => x.nome === piatto);
+    // trova o crea il piatto (confronto case-insensitive, ma tiene il nome originale)
+    let p = menu[giorno][pasto].find(x => (x.nome||'').toLowerCase() === piatto.toLowerCase());
     if (!p) { p = { nome: piatto, ingredienti: [] }; menu[giorno][pasto].push(p); }
     if (ingr) {
       const ig = { nome: ingr, dose: dose, um: unita || 'g' };
