@@ -735,6 +735,210 @@ function applyPreset(id) {
   showToast(`Menù "${preset.nome}" caricato ✓`);
 }
 
+// ═══════════════════════════════════════════════════
+// IMPORT MENÙ DA FILE (CSV / Excel)
+// ═══════════════════════════════════════════════════
+const IMPORT_COLONNE = ['giorno','pasto','piatto','ingrediente','dose','unita','modalita'];
+const IMPORT_PASTI_VALIDI = ['colazione','merenda-mattina','pranzo','merenda','cena','conforto'];
+const IMPORT_MODALITA_VALIDE = ['pers','sq','tot'];
+
+function openImportMenu() {
+  if (!SECTION) { showToast('Seleziona prima una sezione dalla Home'); return; }
+  document.getElementById('import-esito').innerHTML = '';
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-overlay').style.display = 'block';
+  document.getElementById('import-popup').style.display = 'block';
+}
+function closeImportMenu() {
+  document.getElementById('import-overlay').style.display = 'none';
+  document.getElementById('import-popup').style.display = 'none';
+}
+
+// Righe di esempio per il modello
+function modelloRighe() {
+  return [
+    ['giorno','pasto','piatto','ingrediente','dose','unita','modalita'],
+    [1,'cena','Pasta al pomodoro','pasta',100,'g','pers'],
+    [1,'cena','Pasta al pomodoro','passata di pomodoro',120,'g','pers'],
+    [1,'cena','Pasta al pomodoro','parmigiano',15,'g','pers'],
+    [2,'colazione','Colazione','pane',60,'g','pers'],
+    [2,'colazione','Colazione','latte',200,'ml','pers'],
+    [2,'pranzo','Insalata di riso','riso',90,'g','pers'],
+    [2,'pranzo','Insalata di riso','tonno',50,'g','pers'],
+    [2,'cena','Gara di cucina','carne macinata',600,'g','tot'],
+  ];
+}
+
+function scaricaModello(formato) {
+  const righe = modelloRighe();
+  if (formato === 'csv') {
+    const csv = righe.map(r => r.map(c => {
+      const s = String(c);
+      return /[",;\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+    }).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    scaricaBlob(blob, 'modello-menu.csv');
+  } else {
+    // Excel via SheetJS
+    if (typeof XLSX === 'undefined') { showToast('Libreria Excel non disponibile'); return; }
+    const ws = XLSX.utils.aoa_to_sheet(righe);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Menu');
+    XLSX.writeFile(wb, 'modello-menu.xlsx');
+  }
+}
+
+function scaricaBlob(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const esito = document.getElementById('import-esito');
+  esito.innerHTML = '<span style="color:var(--slate-3)">Lettura file…</span>';
+  const nome = file.name.toLowerCase();
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      let righe;
+      if (nome.endsWith('.csv')) {
+        righe = parseCSV(e.target.result);
+      } else {
+        if (typeof XLSX === 'undefined') { esito.innerHTML = '<span style="color:#c0392b">Libreria Excel non disponibile. Usa il CSV.</span>'; return; }
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        righe = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
+      }
+      processaImport(righe);
+    } catch (err) {
+      esito.innerHTML = `<span style="color:#c0392b">Errore lettura file: ${err.message}</span>`;
+    }
+  };
+  reader.onerror = () => { esito.innerHTML = '<span style="color:#c0392b">Impossibile leggere il file.</span>'; };
+  if (nome.endsWith('.csv')) reader.readAsText(file);
+  else reader.readAsArrayBuffer(file);
+}
+
+// Parser CSV semplice (gestisce virgolette e separatori , o ;)
+function parseCSV(testo) {
+  testo = testo.replace(/^\ufeff/, ''); // rimuovi BOM
+  const righe = [];
+  const linee = testo.split(/\r?\n/).filter(l => l.trim() !== '');
+  // rileva separatore: se la prima riga ha più ; che , usa ;
+  const sep = (linee[0].split(';').length > linee[0].split(',').length) ? ';' : ',';
+  for (const linea of linee) {
+    const campi = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < linea.length; i++) {
+      const ch = linea[i];
+      if (ch === '"') {
+        if (inQ && linea[i+1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === sep && !inQ) {
+        campi.push(cur); cur = '';
+      } else cur += ch;
+    }
+    campi.push(cur);
+    righe.push(campi.map(c => c.trim()));
+  }
+  return righe;
+}
+
+function processaImport(righe) {
+  const esito = document.getElementById('import-esito');
+  if (!righe || righe.length < 2) {
+    esito.innerHTML = '<span style="color:#c0392b">Il file è vuoto o non ha righe di dati.</span>';
+    return;
+  }
+
+  // Verifica intestazione
+  const header = righe[0].map(h => String(h).trim().toLowerCase());
+  const idx = {};
+  IMPORT_COLONNE.forEach(col => { idx[col] = header.indexOf(col); });
+  const mancanti = IMPORT_COLONNE.filter(col => idx[col] === -1 && col !== 'modalita' && col !== 'unita');
+  if (mancanti.length) {
+    esito.innerHTML = `<span style="color:#c0392b">Colonne mancanti: ${mancanti.join(', ')}.<br>Scarica il modello per il formato corretto.</span>`;
+    return;
+  }
+
+  const errori = [];
+  const menu = {};
+  let maxGiorno = 0;
+  const pastiUsati = new Set();
+
+  for (let r = 1; r < righe.length; r++) {
+    const riga = righe[r];
+    if (!riga || riga.every(c => String(c).trim() === '')) continue;
+    const nRiga = r + 1;
+
+    const giorno = parseInt(riga[idx.giorno]);
+    const pasto = String(riga[idx.pasto]||'').trim().toLowerCase();
+    const piatto = String(riga[idx.piatto]||'').trim();
+    const ingr = String(riga[idx.ingrediente]||'').trim();
+    const doseRaw = String(riga[idx.dose]??'').trim().replace(',', '.');
+    const unita = idx.unita >= 0 ? String(riga[idx.unita]||'').trim() : 'g';
+    let modalita = idx.modalita >= 0 ? String(riga[idx.modalita]||'').trim().toLowerCase() : 'pers';
+    if (!modalita) modalita = 'pers';
+
+    if (!giorno || giorno < 1) { errori.push(`Riga ${nRiga}: giorno non valido ("${riga[idx.giorno]}")`); continue; }
+    if (!IMPORT_PASTI_VALIDI.includes(pasto)) { errori.push(`Riga ${nRiga}: pasto "${pasto}" non valido`); continue; }
+    if (!piatto) { errori.push(`Riga ${nRiga}: nome piatto mancante`); continue; }
+    if (!IMPORT_MODALITA_VALIDE.includes(modalita)) { errori.push(`Riga ${nRiga}: modalità "${modalita}" non valida (usa pers/sq/tot)`); continue; }
+    const dose = doseRaw === '' ? '' : parseFloat(doseRaw);
+    if (doseRaw !== '' && isNaN(dose)) { errori.push(`Riga ${nRiga}: dose "${doseRaw}" non è un numero`); continue; }
+
+    maxGiorno = Math.max(maxGiorno, giorno);
+    pastiUsati.add(pasto);
+    if (!menu[giorno]) menu[giorno] = {};
+    if (!menu[giorno][pasto]) menu[giorno][pasto] = [];
+    // trova o crea il piatto
+    let p = menu[giorno][pasto].find(x => x.nome === piatto);
+    if (!p) { p = { nome: piatto, ingredienti: [] }; menu[giorno][pasto].push(p); }
+    if (ingr) {
+      const ig = { nome: ingr, dose: dose, um: unita || 'g' };
+      if (modalita !== 'pers') { ig.mult = modalita; ig.perSq = (modalita==='sq'); ig.abs = (modalita==='tot'); }
+      p.ingredienti.push(ig);
+    }
+  }
+
+  if (errori.length) {
+    esito.innerHTML = `<div style="color:#c0392b;background:#fdecea;border:1px solid #f5c6c3;border-radius:6px;padding:10px">
+      <strong>${errori.length} error${errori.length===1?'e':'i'} — import annullato:</strong><br>
+      ${errori.slice(0,8).join('<br>')}${errori.length>8?'<br>…e altri':''}
+    </div>`;
+    return;
+  }
+
+  if (!maxGiorno) { esito.innerHTML = '<span style="color:#c0392b">Nessuna riga valida trovata.</span>'; return; }
+
+  // Conferma prima di sovrascrivere
+  const hasMenu = Object.keys(S().menu||{}).length > 0 &&
+    Object.values(S().menu).some(g => Object.values(g).some(a => Array.isArray(a) && a.some(p => p.nome || (p.ingredienti||[]).length)));
+  if (hasMenu && !confirm('Importare il menù dal file? Sostituirà il menù attuale (configurazione e presenze restano invariate).')) {
+    esito.innerHTML = '<span style="color:var(--slate-3)">Import annullato.</span>';
+    return;
+  }
+
+  // Applica
+  C().giorni = Math.max(C().giorni || 0, maxGiorno);
+  pastiUsati.forEach(p => { if (!C().pastiAttivi) C().pastiAttivi = {}; C().pastiAttivi[p] = true; });
+  S().menu = menu;
+
+  closeImportMenu();
+  document.getElementById('giorni-container').innerHTML = '';
+  render();
+  saveData();
+  goTab('menu');
+  showToast('Menù importato ✓');
+}
+
 function loadConfIntoForm() {
   if (!SECTION) return;
   const conf = C();
