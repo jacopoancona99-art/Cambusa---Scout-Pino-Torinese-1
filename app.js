@@ -3270,7 +3270,8 @@ function avviaSuggerimenti() {
   const box = document.getElementById('suggerimento-box');
   const testo = document.getElementById('suggerimento-testo');
   if (!box || !testo) return;
-  if (localStorage.getItem('cambusa_sug_off') === '1') { box.style.display = 'none'; return; }
+  // La chiusura vale solo per la sessione: riaprendo l'app i suggerimenti tornano
+  if (sessionStorage.getItem('cambusa_sug_off') === '1') { box.style.display = 'none'; return; }
   box.style.display = 'flex';
   _sugIdx = Math.floor(Math.random() * SUGGERIMENTI.length);
   testo.textContent = SUGGERIMENTI[_sugIdx];
@@ -3289,7 +3290,8 @@ function chiudiSuggerimenti() {
   const box = document.getElementById('suggerimento-box');
   if (box) box.style.display = 'none';
   clearInterval(_sugTimer);
-  localStorage.setItem('cambusa_sug_off', '1');
+  // solo per questa sessione — torna alla prossima apertura dell'app
+  sessionStorage.setItem('cambusa_sug_off', '1');
 }
 
 // INIT
