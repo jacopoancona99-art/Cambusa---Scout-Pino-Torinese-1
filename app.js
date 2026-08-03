@@ -3045,54 +3045,20 @@ function loadNote() {
 // ═══════════════════════════════════════════════════
 const TUTORIAL_STEPS = [
   {
-    title: '👋 Benvenuto nella Cambusa Scout!',
-    body: `<p>Questo gestionale ti aiuta a pianificare il menu, la spesa e il budget del campo — condiviso in tempo reale con tutto il team.</p>
-    <ul>
-      <li>Funziona come <strong>app installabile</strong> sul telefono (iOS e Android), senza App Store</li>
-      <li>Si <strong>sincronizza in tempo reale</strong> tra tutti i dispositivi con lo stesso codice campo</li>
-      <li>Produce <strong>fogli stampabili</strong>: menu settimanale e foglio dosi da portare in campo</li>
-    </ul>
-    <p style="margin-top:8px;font-size:12px;background:var(--green-50);padding:8px 10px;border-radius:6px;color:var(--green-800)">💡 In ogni sezione trovi il pulsante <strong>?</strong> in alto a destra — cliccalo per le istruzioni di quella pagina.</p>`
+    title: '👋 Cambusa Scout',
+    body: `<p>Pianifica menu, spesa e budget del campo. Tutto si sincronizza in tempo reale con chi ha lo stesso <strong>codice campo</strong>.</p>
+    <p style="margin-top:8px">Inserisci un codice nella Home, scegli <strong>Branco</strong> o <strong>Reparto</strong>, e parti.</p>`
   },
   {
-    title: '🔑 Codice campo e sincronizzazione',
-    body: `<p>Il <strong>codice campo</strong> (es. <code style="background:#f5f5f5;padding:1px 5px;border-radius:4px">ESTATE25</code>) connette tutti i dispositivi agli stessi dati in tempo reale.</p>
-    <ul>
-      <li>Inseriscilo nella <strong>Home</strong> e clicca <strong>Connetti</strong></li>
-      <li>Condividilo con i tuoi capi — tutti vedranno e modificheranno gli stessi dati</li>
-      <li>I campi recenti appaiono come pillole cliccabili per passare velocemente da un campo all'altro</li>
-      <li><strong>Branco</strong> e <strong>Reparto</strong> hanno menu, spesa e budget separati sullo stesso campo</li>
-    </ul>`
+    title: '⚙️ → 🍽️ Due passi',
+    body: `<p><strong>1. Configurazione</strong>: date, presenze, budget.</p>
+    <p style="margin-top:6px"><strong>2. Menu</strong>: aggiungi i piatti (o carica un <strong>Menù pronto</strong>). Lista spesa, dosi e budget si generano da soli.</p>`
   },
   {
-    title: '⚙ Configurazione',
-    body: `<p>Il primo passo — vai in <strong>Configurazione</strong> e compila:</p>
-    <ul>
-      <li><strong>Date</strong> di inizio e fine campo + primo e ultimo pasto servito (i giorni si calcolano da soli)</li>
-      <li><strong>Presenze</strong>: ragazzi, capi, cambusieri, staff</li>
-      <li><strong>Pasti da includere</strong>: un click per attivare/disattivare</li>
-      <li><strong>Intolleranze</strong> con il numero di persone coinvolte — vengono segnalate automaticamente nel menu</li>
-      <li><strong>Budget assegnato</strong> in euro</li>
-    </ul>
-    <p style="margin-top:6px;font-size:11px;color:var(--slate-3)">Clicca <strong>?</strong> in alto a destra in ogni sezione per i dettagli.</p>`
-  },
-  {
-    title: '🍽 Menu, orari e dosi',
-    body: `<p>Nel tab <strong>Menu</strong> pianifica ogni pasto:</p>
-    <ul>
-      <li>Aggiungi <strong>piatti</strong> e <strong>ingredienti</strong> con dose per persona e unità di misura</li>
-      <li>Correggi il <strong>numero persone</strong> per singolo giorno o per singolo pasto — le dosi si calcolano sempre al livello più basso</li>
-      <li>Clicca <strong>🕐 orario</strong> per impostare l'orario di ogni pasto, generale o per singolo giorno</li>
-      <li>Gli <strong>allergeni</strong> attivi vengono segnalati in arancione — confermali come sicuri o inserisci un ingrediente alternativo per gli intolleranti</li>
-      <li><strong>Lista spesa</strong> e <strong>foglio dosi</strong> si aggiornano automaticamente</li>
-    </ul>`
-  },
-  {
-    title: '💰 Spesa, budget e scontrini',
-    body: `<p>La <strong>Lista spesa</strong> si genera automaticamente. Spunta gli articoli acquistati e inserisci il prezzo — si sincronizza automaticamente con il <strong>Budget consuntivo</strong>.</p>
-    <p style="margin-top:8px">Nel tab <strong>Scontrini</strong> traccia ogni acquisto con metodo di pagamento. Gli anticipi personali appaiono nei <strong>Rimborsi da fare</strong> e puoi segnarli come evasi (contanti o bonifico). Il tab Riepilogo è esportabile in CSV.</p>
-    <p style="margin-top:8px">Il tab <strong>Note</strong> è uno spazio libero condiviso in tempo reale per comunicazioni rapide tra i cambusieri.</p>
-    <p style="margin-top:10px;font-size:12px;background:var(--green-50);padding:8px 10px;border-radius:6px;color:var(--green-800)">✓ Pronto — buon campo! Ricorda il <strong>?</strong> in ogni tab se hai dubbi.</p>`
+    title: '💡 Il resto',
+    body: `<p>I <strong>suggerimenti</strong> in cima a ogni pagina ti mostrano le funzioni utili, un po' alla volta.</p>
+    <p style="margin-top:6px">Per i dettagli di una sezione, tocca il <strong>?</strong> in alto a destra.</p>
+    <p style="margin-top:8px;font-size:12px;background:var(--green-50);padding:8px 10px;border-radius:6px;color:var(--green-800)">Buon campo! 🏕️</p>`
   }
 ];
 
@@ -3279,6 +3245,53 @@ function adminDeleteCampo(code) {
 }
 
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// SUGGERIMENTI A ROTAZIONE
+// ═══════════════════════════════════════════════════
+// Focalizzati sulle cose NON base che la gente non scopre da sola.
+const SUGGERIMENTI = [
+  'Puoi partire da un menù già pronto: nel Menu tocca "Menù pronti".',
+  'Hai già un menù in Excel o CSV? Nel Menu tocca "Importa menù".',
+  'Per cambiare le persone di un solo pasto, usa la casella "Pers. pasto" accanto al pasto.',
+  'Per cambiare le persone di un intero giorno, usa la casella "Persone" in cima al giorno.',
+  'Tocca "🕐 orario" accanto a un pasto per impostarne l\'orario, anche solo per un giorno.',
+  'Nel reparto ogni ingrediente ha un tasto ×pers / ×sq / ×tot: ×pers moltiplica per le persone, ×sq per il numero di squadriglie, ×tot lascia la quantità così com\'è (es. gara di cucina).',
+  'La lista spesa e il budget si generano da soli dal menu: non serve inserirli a mano.',
+  'I prezzi li scrivi una volta sola nella Lista spesa: il Budget si aggiorna da solo.',
+  'Le squadriglie si impostano in Configurazione; il foglio dosi diviso per squadriglia è in "Dosi e Riepilogo".',
+  'Gli allergeni si segnalano da soli: imposta le intolleranze in Configurazione.',
+  'Ogni sezione ha un "?" in alto a destra con le istruzioni essenziali.',
+  'Le note sono condivise in tempo reale con tutti quelli collegati allo stesso codice campo.',
+];
+
+let _sugTimer = null, _sugIdx = 0;
+
+function avviaSuggerimenti() {
+  const box = document.getElementById('suggerimento-box');
+  const testo = document.getElementById('suggerimento-testo');
+  if (!box || !testo) return;
+  if (localStorage.getItem('cambusa_sug_off') === '1') { box.style.display = 'none'; return; }
+  box.style.display = 'flex';
+  _sugIdx = Math.floor(Math.random() * SUGGERIMENTI.length);
+  testo.textContent = SUGGERIMENTI[_sugIdx];
+  clearInterval(_sugTimer);
+  _sugTimer = setInterval(() => {
+    testo.style.opacity = '0';
+    setTimeout(() => {
+      _sugIdx = (_sugIdx + 1) % SUGGERIMENTI.length;
+      testo.textContent = SUGGERIMENTI[_sugIdx];
+      testo.style.opacity = '1';
+    }, 300);
+  }, 6000);
+}
+
+function chiudiSuggerimenti() {
+  const box = document.getElementById('suggerimento-box');
+  if (box) box.style.display = 'none';
+  clearInterval(_sugTimer);
+  localStorage.setItem('cambusa_sug_off', '1');
+}
+
 // INIT
 // ═══════════════════════════════════════════════════
 document.querySelector('.tab-btn[data-tab="home"]').classList.add('active');
@@ -3289,6 +3302,9 @@ initFirebase();
 // Popola nome input
 const nameInp = document.getElementById('my-name-input');
 if (nameInp) nameInp.value = getMyName();
+
+// Avvia i suggerimenti a rotazione
+avviaSuggerimenti();
 
 // Tutorial al primo accesso
 if (!localStorage.getItem('cambusa_tutorial_done')) {
