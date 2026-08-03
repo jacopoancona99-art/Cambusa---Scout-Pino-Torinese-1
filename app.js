@@ -3252,16 +3252,17 @@ function adminDeleteCampo(code) {
 const SUGGERIMENTI = [
   'Puoi partire da un menù già pronto: nel Menu tocca "Menù pronti".',
   'Hai già un menù in Excel o CSV? Nel Menu tocca "Importa menù".',
-  'Per cambiare le persone di un solo pasto, usa la casella "Pers. pasto" accanto al pasto.',
-  'Per cambiare le persone di un intero giorno, usa la casella "Persone" in cima al giorno.',
-  'Tocca "🕐 orario" accanto a un pasto per impostarne l\'orario, anche solo per un giorno.',
-  'Nel reparto ogni ingrediente ha un tasto ×pers / ×sq / ×tot: ×pers moltiplica per le persone, ×sq per il numero di squadriglie, ×tot lascia la quantità così com\'è (es. gara di cucina).',
-  'La lista spesa e il budget si generano da soli dal menu: non serve inserirli a mano.',
-  'I prezzi li scrivi una volta sola nella Lista spesa: il Budget si aggiorna da solo.',
-  'Le squadriglie si impostano in Configurazione; il foglio dosi diviso per squadriglia è in "Dosi e Riepilogo".',
-  'Gli allergeni si segnalano da soli: imposta le intolleranze in Configurazione.',
+  'Cambia le persone di un solo pasto con la casella "Pers. pasto" accanto al pasto.',
+  'Cambia le persone di un intero giorno con la casella "Persone" in cima al giorno.',
+  'Tocca "🕐 orario" accanto a un pasto per impostarne l\'orario.',
+  'Nel reparto ogni ingrediente ha un tasto ×pers / ×sq / ×tot per come moltiplicare la dose.',
+  '×pers moltiplica per le persone, ×sq per le squadriglie, ×tot lascia la quantità invariata.',
+  'La lista spesa e il budget si generano da soli dal menu.',
+  'I prezzi si scrivono una volta sola nella Lista spesa: il Budget si aggiorna da solo.',
+  'Le squadriglie si impostano in Configurazione; le dosi divise sono in "Dosi e Riepilogo".',
+  'Imposta le intolleranze in Configurazione: gli allergeni si segnalano da soli.',
   'Ogni sezione ha un "?" in alto a destra con le istruzioni essenziali.',
-  'Le note sono condivise in tempo reale con tutti quelli collegati allo stesso codice campo.',
+  'Le note sono condivise in tempo reale con chi ha lo stesso codice campo.',
 ];
 
 let _sugTimer = null, _sugIdx = 0;
