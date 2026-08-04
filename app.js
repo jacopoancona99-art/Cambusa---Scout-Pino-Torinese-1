@@ -130,6 +130,7 @@ const VM = {esselunga:1.05,coop:1.03,lidl:.93,eurospin:.88,carrefour:1.02,penny:
 // STATO
 // ═══════════════════════════════════════════════════
 let SECTION = null; // 'branco' | 'reparto'
+const APP_VERSION = 'v23';
 let CAMPO_CODE = '';
 
 // Stato per sezione — tutto viene duplicato
@@ -3167,14 +3168,105 @@ function saveOrario() {
 // ═══════════════════════════════════════════════════
 // PANNELLO ADMIN — gestione campi
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// SEGNALAZIONI (invio problemi dall'app → Firebase)
+// ═══════════════════════════════════════════════════
+function openSegnala() {
+  document.getElementById('segnala-testo').value = '';
+  document.getElementById('segnala-nome').value = getMyName ? (getMyName() || '') : '';
+  document.getElementById('segnala-esito').innerHTML = '';
+  document.getElementById('segnala-overlay').style.display = 'block';
+  document.getElementById('segnala-popup').style.display = 'block';
+}
+function closeSegnala() {
+  document.getElementById('segnala-overlay').style.display = 'none';
+  document.getElementById('segnala-popup').style.display = 'none';
+}
+
+function inviaSegnalazione() {
+  const testo = document.getElementById('segnala-testo').value.trim();
+  const nome  = document.getElementById('segnala-nome').value.trim();
+  const esito = document.getElementById('segnala-esito');
+
+  if (!testo) { esito.innerHTML = '<span style="color:#c0392b">Scrivi una descrizione del problema.</span>'; return; }
+  if (!FB_READY || !fbDb) { esito.innerHTML = '<span style="color:#c0392b">Serve la connessione a internet per inviare.</span>'; return; }
+
+  esito.innerHTML = '<span style="color:var(--slate-3)">Invio…</span>';
+  const seg = {
+    testo: testo,
+    nome: nome || '(anonimo)',
+    campo: CAMPO_CODE || '(nessun campo)',
+    sezione: SECTION || '(nessuna)',
+    versione: APP_VERSION,
+    userAgent: navigator.userAgent,
+    data: new Date().toISOString(),
+    ts: Date.now(),
+    letto: false
+  };
+  fbDb.ref('segnalazioni').push(seg)
+    .then(() => {
+      esito.innerHTML = '<span style="color:var(--green-800)">✓ Segnalazione inviata, grazie!</span>';
+      setTimeout(closeSegnala, 1200);
+    })
+    .catch(err => {
+      esito.innerHTML = `<span style="color:#c0392b">Errore invio: ${err.message}</span>`;
+    });
+}
+
 function openAdmin() {
   document.getElementById('admin-overlay').style.display = 'block';
   document.getElementById('admin-popup').style.display = 'block';
+  loadAdminSegnalazioni();
   loadAdminCampi();
 }
 function closeAdmin() {
   document.getElementById('admin-overlay').style.display = 'none';
   document.getElementById('admin-popup').style.display = 'none';
+}
+
+function loadAdminSegnalazioni() {
+  const box = document.getElementById('admin-segnalazioni');
+  if (!box) return;
+  if (!FB_READY || !fbDb) { box.innerHTML = '<div style="font-size:12px;color:#c0392b">Firebase non disponibile.</div>'; return; }
+  box.innerHTML = '<div style="font-size:12px;color:var(--slate-3)">Caricamento…</div>';
+
+  fbDb.ref('segnalazioni').once('value').then(snap => {
+    const val = snap.val() || {};
+    const keys = Object.keys(val);
+    if (!keys.length) {
+      box.innerHTML = '<div style="font-size:12px;color:var(--slate-3)">Nessuna segnalazione.</div>';
+      return;
+    }
+    // ordina dalla più recente
+    keys.sort((a,b) => (val[b].ts||0) - (val[a].ts||0));
+    const nNuove = keys.filter(k => !val[k].letto).length;
+
+    box.innerHTML = (nNuove ? `<div style="font-size:11px;color:var(--green-800);font-weight:600;margin-bottom:8px">${nNuove} nuova/e</div>` : '') +
+      keys.map(k => {
+        const s = val[k];
+        const data = s.data ? new Date(s.data).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+        return `<div style="border:1px solid ${s.letto?'var(--border)':'#c8773a'};background:${s.letto?'var(--surface)':'#fff8f0'};border-radius:var(--radius-sm);padding:10px;margin-bottom:8px">
+          <div style="font-size:13px;color:var(--slate);white-space:pre-wrap;margin-bottom:6px">${(s.testo||'').replace(/</g,'&lt;')}</div>
+          <div style="font-size:10px;color:var(--slate-3)">
+            <strong>${(s.nome||'anonimo').replace(/</g,'&lt;')}</strong> · campo ${s.campo||'—'} · ${s.sezione||'—'} · ${s.versione||'?'} · ${data}
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            ${!s.letto ? `<button class="admin-seg-read" data-key="${k}" style="font-size:10px;padding:4px 8px;border-radius:5px;border:1px solid var(--green-600);background:var(--green-50);color:var(--green-800);cursor:pointer">Segna letta</button>` : ''}
+            <button class="admin-seg-del" data-key="${k}" style="font-size:10px;padding:4px 8px;border-radius:5px;border:1px solid #f5c6c3;background:#fdecea;color:#c0392b;cursor:pointer">Elimina</button>
+          </div>
+        </div>`;
+      }).join('');
+
+    box.querySelectorAll('.admin-seg-read').forEach(b => b.addEventListener('click', function() {
+      fbDb.ref('segnalazioni/' + this.dataset.key + '/letto').set(true).then(loadAdminSegnalazioni);
+    }));
+    box.querySelectorAll('.admin-seg-del').forEach(b => b.addEventListener('click', function() {
+      if (!confirm('Eliminare questa segnalazione?')) return;
+      fbDb.ref('segnalazioni/' + this.dataset.key).remove().then(loadAdminSegnalazioni);
+    }));
+  }).catch(err => {
+    box.innerHTML = `<div style="font-size:12px;color:#c0392b">Errore lettura: ${err.message}<br><span style="color:var(--slate-3)">Verifica che le regole Firebase permettano la lettura di "segnalazioni".</span></div>`;
+  });
 }
 
 function loadAdminCampi() {

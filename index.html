@@ -412,12 +412,22 @@
     <button class="btn btn-secondary btn-sm" onclick="closeImportMenu()" style="margin-top:12px;width:100%">Chiudi</button>
   </div>
 
-  <div id="admin-overlay" onclick="closeAdmin()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200"></div>
-  <div id="admin-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:201;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:calc(100% - 40px);max-width:480px;max-height:82vh;overflow-y:auto;padding:20px">
-    <div style="font-family:Georgia,serif;font-size:18px;font-weight:700;color:var(--green-800);margin-bottom:4px">🔧 Gestione campi</div>
-    <div style="font-size:12px;color:var(--slate-3);margin-bottom:14px">Tutti i campi presenti sul database. L'eliminazione è definitiva e rimuove i dati per tutti i dispositivi.</div>
-    <div id="admin-campi-list"><div style="font-size:12px;color:var(--slate-3)">Caricamento…</div></div>
-    <button class="btn btn-secondary btn-sm" onclick="closeAdmin()" style="margin-top:12px;width:100%">Chiudi</button>
+  <!-- Popup Segnala un problema -->
+  <div id="segnala-overlay" onclick="closeSegnala()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200"></div>
+  <div id="segnala-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:201;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:calc(100% - 40px);max-width:440px;max-height:82vh;overflow-y:auto;padding:20px">
+    <div style="font-family:Georgia,serif;font-size:18px;font-weight:700;color:var(--green-800);margin-bottom:6px">Segnala un problema</div>
+    <div style="font-size:12px;color:var(--slate-3);margin-bottom:14px">Descrivi cosa non va o cosa manca. La segnalazione arriva direttamente a chi cura l'app.</div>
+    <label style="font-size:12px;font-weight:600;color:var(--slate);display:block;margin-bottom:4px">Il problema</label>
+    <textarea id="segnala-testo" placeholder="Es. Quando aggiungo un piatto la tastiera si chiude…" rows="4"
+      style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:12px"></textarea>
+    <label style="font-size:12px;font-weight:600;color:var(--slate);display:block;margin-bottom:4px">Come ti chiami <span style="font-weight:400;color:var(--slate-3)">(facoltativo)</span></label>
+    <input type="text" id="segnala-nome" placeholder="Il tuo nome"
+      style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;font-family:inherit;margin-bottom:14px">
+    <div id="segnala-esito" style="font-size:12px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="closeSegnala()" style="flex:1">Annulla</button>
+      <button class="btn btn-primary btn-sm" onclick="inviaSegnalazione()" style="flex:1">Invia</button>
+    </div>
   </div>
 
   <div id="menu-pronti-overlay" onclick="closeMenuPronti()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200"></div>
@@ -431,9 +441,15 @@
   <!-- Popup Admin — gestione campi -->
   <div id="admin-overlay" onclick="closeAdmin()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:210"></div>
   <div id="admin-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:211;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:calc(100% - 40px);max-width:480px;max-height:82vh;overflow-y:auto;padding:20px">
-    <div style="font-family:Georgia,serif;font-size:18px;font-weight:700;color:var(--green-800);margin-bottom:4px">🔧 Gestione campi</div>
-    <div style="font-size:12px;color:var(--slate-3);margin-bottom:14px">Tutti i codici campo salvati. Usa con attenzione: l'eliminazione è definitiva e cancella i dati per tutti.</div>
-    <div id="admin-list"><div style="font-size:12px;color:var(--slate-3)">Caricamento…</div></div>
+    <div style="font-family:Georgia,serif;font-size:18px;font-weight:700;color:var(--green-800);margin-bottom:4px">🔧 Admin</div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--slate);margin:12px 0 6px">Segnalazioni ricevute</div>
+    <div id="admin-segnalazioni"><div style="font-size:12px;color:var(--slate-3)">Caricamento…</div></div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--slate);margin:18px 0 6px">Gestione campi</div>
+    <div style="font-size:11px;color:var(--slate-3);margin-bottom:8px">L'eliminazione è definitiva e cancella i dati per tutti.</div>
+    <div id="admin-campi-list"><div style="font-size:12px;color:var(--slate-3)">Caricamento…</div></div>
+
     <button class="btn btn-secondary btn-sm" onclick="closeAdmin()" style="margin-top:12px;width:100%">Chiudi</button>
   </div>
 
@@ -798,6 +814,7 @@
 <!-- FOOTER -->
 <div id="footer">
   <div id="footer-inner">
+    <button onclick="openSegnala()" class="no-print" style="background:none;border:none;color:rgba(255,255,255,.75);font-size:11px;font-family:inherit;cursor:pointer;text-decoration:underline;padding:0;margin-right:4px">Segnala un problema</button>
     <span class="footer-text">Gruppo Pino Torinese 1 · Jacopo Ancona</span>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" style="height:16px;opacity:.7" aria-label="Bandiera Unione Europea">
       <rect width="36" height="24" fill="#003399"/>
