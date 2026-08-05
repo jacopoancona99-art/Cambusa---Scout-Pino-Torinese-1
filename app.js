@@ -357,10 +357,26 @@ function stopListener() {
   }
 }
 
+// Azzera i contenitori DOM ricostruiti dinamicamente, così al cambio di campo
+// non restano elementi del campo precedente. Il successivo render() li ripopola.
+function resetVisteDinamiche() {
+  const ids = [
+    'giorni-container',        // menu
+    'preview-menu','preview-dosi',  // anteprime dosi & stampe
+    'dosi-sq-mount','sq-staff-list','sq-dosi-content','sq-dosi-content-mount',
+    'squadriglie-list','squadriglie-riepilogo',
+    'lista-spesa','spesa-content','scontrini-list'
+  ];
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+}
+
 function connectCampo() {
   if (!CAMPO_CODE) return;
   setSyncStatus('loading');
   renderCampiRecenti();
+  // Cambio campo: azzera i contenitori dinamici così non restano residui
+  // del campo precedente prima che arrivino i nuovi dati.
+  resetVisteDinamiche();
 
   if (!FB_READY) {
     loadLocalData();
