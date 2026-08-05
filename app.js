@@ -327,9 +327,10 @@ function switchCampo(code) {
   clearTimeout(_saveTimer);       // annulla salvataggi in sospeso del campo precedente
   stopListener();
   CAMPO_CODE = code;
-  document.getElementById('campo-codice').value = code;
+  const ci = document.getElementById('campo-codice'); if (ci) ci.value = '';
   localStorage.setItem('cambusa_last_code', code);
   connectCampo();
+  aggiornaCampoAttivoBox();
 }
 function deleteCampo(code) {
   removeCampoRecente(code);
@@ -337,9 +338,10 @@ function deleteCampo(code) {
     clearTimeout(_saveTimer);
     stopListener();
     CAMPO_CODE = '';
-    document.getElementById('campo-codice').value = '';
+    const ci = document.getElementById('campo-codice'); if (ci) ci.value = '';
     localStorage.removeItem('cambusa_last_code');
     setSyncStatus('idle');
+    aggiornaCampoAttivoBox();
   }
   renderCampiRecenti();
 }
@@ -439,15 +441,119 @@ function setSyncStatus(status) {
 }
 
 async function applyCode() {
+  // compatibilità: reindirizza al nuovo caricaCampo
+  return caricaCampo();
+}
+
+// Genera un codice campo leggibile: PINO-XXXX (4 caratteri senza ambigui)
+function generaCodiceCampo() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no O/0/I/1 per leggibilità
+  let s = '';
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random()*chars.length)];
+  return 'PINO-' + s;
+}
+
+async function nuovoCampo() {
+  if (!FB_READY || !fbDb) { showToast('Serve la connessione per creare un campo'); return; }
+  // Suggerisci un codice libero (controlla che non esista)
+  let code = generaCodiceCampo();
+  for (let tentativi = 0; tentativi < 5; tentativi++) {
+    try {
+      const snap = await fbDb.ref('campi/' + code).once('value');
+      if (!snap.exists()) break;       // libero
+      code = generaCodiceCampo();       // occupato, riprova
+    } catch(e) { break; }
+  }
+  // Permetti di modificarlo
+  const scelto = prompt('Codice del nuovo campo (modificabile).\nTienilo così o scrivine uno tuo (es. ESTATE25):', code);
+  if (scelto === null) return;
+  const finale = scelto.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');
+  if (!finale) { showToast('Codice non valido'); return; }
+
+  // Se esiste già, avvisa (potrebbe sovrascrivere dati altrui)
+  try {
+    const snap = await fbDb.ref('campi/' + finale).once('value');
+    if (snap.exists() && !confirm(`Il codice "${finale}" esiste già. Vuoi caricarlo invece di crearne uno nuovo?`)) return;
+  } catch(e) {}
+
+  CAMPO_CODE = finale;
+  localStorage.setItem('cambusa_last_code', finale);
+  addCampoRecente(finale);
+  connectCampo();
+  aggiornaCampoAttivoBox();
+  showToast('Campo "' + finale + '" creato ✓');
+}
+
+async function caricaCampo() {
   const input = document.getElementById('campo-codice');
-  const code  = input.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if (!code) { showToast('Inserisci un codice valido'); return; }
+  const code  = input.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');
+  if (!code) { showToast('Inserisci un codice campo'); return; }
+  if (!FB_READY || !fbDb) { showToast('Serve la connessione per caricare un campo'); return; }
+
+  // Verifica che il campo esista
+  try {
+    const snap = await fbDb.ref('campi/' + code).once('value');
+    if (!snap.exists()) {
+      showToast('Nessun campo con codice "' + code + '"');
+      return;
+    }
+  } catch(e) { showToast('Errore di connessione'); return; }
+
   CAMPO_CODE = code;
-  input.value = code;
+  input.value = '';
   localStorage.setItem('cambusa_last_code', code);
   addCampoRecente(code);
   connectCampo();
-  showToast('Connesso al campo ' + code);
+  aggiornaCampoAttivoBox();
+  showToast('Campo "' + code + '" caricato ✓');
+}
+
+// Mostra/aggiorna il box col codice del campo attivo
+function aggiornaCampoAttivoBox() {
+  const box = document.getElementById('campo-attivo-box');
+  const scelta = document.getElementById('campo-scelta');
+  const codeEl = document.getElementById('campo-attivo-code');
+  if (!box) return;
+  if (CAMPO_CODE) {
+    box.style.display = 'block';
+    if (codeEl) codeEl.textContent = CAMPO_CODE;
+    if (scelta) scelta.style.display = 'none';
+  } else {
+    box.style.display = 'none';
+    if (scelta) scelta.style.display = 'flex';
+  }
+}
+
+// Copia negli appunti un messaggio pronto con codice + link
+function condividiCampo() {
+  if (!CAMPO_CODE) return;
+  const link = 'https://jacopoancona99-art.github.io/Cambusa---Scout-Pino-Torinese-1';
+  const msg = `Ci vediamo sulla Cambusa Scout! 🏕️\nCodice campo: ${CAMPO_CODE}\nApri l'app e tocca "Carica campo": ${link}`;
+  if (navigator.share) {
+    navigator.share({ text: msg }).catch(()=>{});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(msg).then(
+      () => showToast('Messaggio copiato ✓ — incollalo agli amici'),
+      () => showToast('Copia non riuscita')
+    );
+  } else {
+    showToast('Copia non supportata su questo dispositivo');
+  }
+}
+
+// Torna alla scelta nuovo/carica (senza cancellare il campo)
+function cambiaCampo() {
+  clearTimeout(_saveTimer);
+  stopListener();
+  CAMPO_CODE = '';
+  SECTION = '';
+  localStorage.removeItem('cambusa_last_code');
+  aggiornaCampoAttivoBox();
+  setSyncStatus('idle');
+  document.getElementById('home-section-info').style.display = 'none';
+  document.getElementById('home-percorso').style.display = 'none';
+  document.querySelectorAll('.section-pill').forEach(p => p.classList.remove('active'));
+  showToast('Scegli o crea un campo');
 }
 
 // ═══════════════════════════════════════════════════
@@ -3326,9 +3432,10 @@ function adminDeleteCampo(code) {
         clearTimeout(_saveTimer);
         stopListener();
         CAMPO_CODE = '';
-        document.getElementById('campo-codice').value = '';
+        const ci = document.getElementById('campo-codice'); if (ci) ci.value = '';
         localStorage.removeItem('cambusa_last_code');
         setSyncStatus('idle');
+        aggiornaCampoAttivoBox();
       }
       loadAdminCampi();
       renderCampiRecenti();
@@ -3410,11 +3517,12 @@ if (!localStorage.getItem('cambusa_tutorial_done')) {
 const savedCode = localStorage.getItem('cambusa_last_code');
 if (savedCode) {
   CAMPO_CODE = savedCode;
-  document.getElementById('campo-codice').value = savedCode;
   connectCampo();
+  aggiornaCampoAttivoBox();
 } else {
   renderCampiRecenti();
   setSyncStatus('idle');
+  aggiornaCampoAttivoBox();
 }
 
 // Ripristina sezione (i dati vengono caricati, ma la vista resta sulla Home)
